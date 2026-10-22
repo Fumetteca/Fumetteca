@@ -1,0 +1,26 @@
+name: Uscite editori
+on:
+  schedule:
+    - cron: '23 4 * * *'   # ogni giorno verso le 6 italiane
+  workflow_dispatch:        # tasto "Run workflow" per lanciarlo a mano
+permissions:
+  contents: write
+concurrency: uscite
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Leggi le uscite (Star Comics, Panini, J-POP)
+        run: node tools/uscite.mjs
+      - name: Salva il file aggiornato
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add uscite.json
+          git diff --cached --quiet || git commit -m "Aggiorna uscite editori"
+          git push
