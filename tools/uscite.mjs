@@ -6,7 +6,8 @@ const OUT = process.env.OUT || 'uscite.json';
 const T = { star: process.env.STAR_BASE || 'https://www.starcomics.com', panini: process.env.PANINI_BASE || 'https://www.panini.it', jpop: process.env.JPOP_BASE || 'https://j-pop.it' };
 const REAL = { star: 'https://www.starcomics.com', panini: 'https://www.panini.it', jpop: 'https://j-pop.it' };
 const ONLY = (process.env.ONLY || 'star,panini,jpop').split(',');
-const PAUSE = +(process.env.PAUSE ?? 400), STAR_WEEKS_BACK = +(process.env.STAR_WEEKS_BACK || 520), DETAILS = +(process.env.DETAILS || 200);
+const PAUSE = +(process.env.PAUSE ?? 400), STAR_WEEKS_BACK = +(process.env.STAR_WEEKS_BACK || 520), DETAILS = +(process.env.DETAILS || 3000);
+const CONC = +(process.env.CONC || 4), BUDGET = +(process.env.BUDGET_MIN || 60) * 6e4, T0 = Date.now();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const HEAD = { 'user-agent': 'Mozilla/5.0 (compatible; Fumetteca personal release checker; +https://github.com)', 'accept-language': 'it-IT,it;q=0.9' };
 async function get(u, json) {
@@ -32,13 +33,19 @@ const meta = (html, prop) => { const m = html.match(new RegExp('<meta[^>]+proper
 const ogImage = (html, base) => { const u = meta(html, 'og:image'); return u ? new URL(u.replace(/&amp;/g, '&'), base).href : ''; };
 const pagesIn = t => +((t.match(/pagine\D{0,3}(\d{2,4})\b/i) || t.match(/\b(\d{2,4})\s*pagine/i) || [])[1] || 0);
 const numIn = t => { const m = t.match(/\b(?:n\.?|vol\.?|volume|#)\s*(\d{1,4})\b/i) || t.match(/[\s-](\d{1,4})\s*$/); return m ? +m[1] : null; };
+// legge più schede in parallelo (CONC alla volta), prima quelle senza copertina, poi le più recenti; si ferma al tetto o al tempo massimo
+const first = k => (a, b) => (!!a.cover - !!b.cover) || (b[k] || '').localeCompare(a[k] || '');
+async function pool(list, max, fn) {
+  let i = 0; const run = async () => { while (i < Math.min(list.length, max) && Date.now() - T0 < BUDGET) { const x = list[i++]; await fn(x); await sleep(PAUSE); } };
+  await Promise.all(Array.from({ length: CONC }, run)); return i;
+}
 const esc = s => s.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&');
 const old = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {};
 const items = new Map((old.items || []).map(x => [x.url, x]));
 const stats = old.stats || {}, state = old.state || {};
 const now = new Date(), today = now.toISOString().slice(0, 10);
 const put = (pub, e) => { const o = items.get(e.url) || {}; items.set(e.url, { ...o, ...e, pub }); };
-const stale = x => !x.detailAt || ((!x.isbn || !x.date || x.date > today) && (Date.parse(today) - Date.parse(x.detailAt)) > 6 * 864e5);
+const stale = x => !x.detailAt || ((!x.cover || !x.isbn || !x.date || x.date > today) && (Date.parse(today) - Date.parse(x.detailAt)) > 6 * 864e5);
 
 // ---------- STAR COMICS: pagine settimanali /uscite/AAAA-MM-GG + scheda del volume ----------
 async function star() {
@@ -63,14 +70,15 @@ async function star() {
     if (d < today) done.add(d); fetched++; await sleep(PAUSE);
   }
   state.starWeeks = [...done].sort();
-  let det = 0;
-  for (const x of [...items.values()].filter(x => x.pub === 'star' && stale(x)).sort((a, b) => (b.date || '').localeCompare(a.date || ''))) {
-    if (det >= DETAILS) break; const h = await get(x.url.replace(REAL.star, T.star)); det++;
+  const todo = [...items.values()].filter(x => x.pub === 'star' && stale(x)).sort(first('date'));
+  const det = await pool(todo, DETAILS, async x => {
+    const h = await get(x.url.replace(REAL.star, T.star));
     if (h) { const t = strip(h); x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, REAL.star) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0; }
-    x.detailAt = today; await sleep(PAUSE);
-  }
+    x.detailAt = today;
+  });
+  const left = [...items.values()].filter(x => x.pub === 'star' && !x.cover).length;
   if (!fetched && failed) throw Error('starcomics.com non raggiungibile');
-  return `${fetched} settimane lette, ${det} schede`;
+  return `${fetched} settimane lette, ${det} schede` + (left ? `, ${left} ancora senza copertina` : ', tutte con copertina');
 }
 
 // ---------- PANINI (Planet Manga): mappa del sito dei manga + pagina prodotto ----------
@@ -86,9 +94,9 @@ async function panini() {
     put('panini', { url, title: o.title || parts.slice(0, -3).join(' ') + ' ' + num, slugTitle: parts.slice(0, -3).join(' '), number: num, lastmod: (m[2] || '').slice(0, 10) });
     n++;
   }
-  let det = 0;
-  for (const x of [...items.values()].filter(x => x.pub === 'panini' && stale(x)).sort((a, b) => (b.lastmod || '').localeCompare(a.lastmod || ''))) {
-    if (det >= DETAILS) break; const h = await get(x.url.replace(REAL.panini, T.panini)); det++;
+  const todo = [...items.values()].filter(x => x.pub === 'panini' && stale(x)).sort(first('lastmod'));
+  const det = await pool(todo, DETAILS, async x => {
+    const h = await get(x.url.replace(REAL.panini, T.panini));
     if (h) {
       const t = strip(h), lab = t.match(/(?:data di uscita|in uscita il|uscita)\D{0,25}(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i);
       const og = meta(h, 'og:title'), h1 = (h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
@@ -97,8 +105,8 @@ async function panini() {
       x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, REAL.panini) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
       x.imprint = /planet manga/i.test(t) ? 'Planet Manga' : (x.imprint || '');
     }
-    x.detailAt = today; await sleep(PAUSE);
-  }
+    x.detailAt = today;
+  });
   return `${n} volumi nella mappa, ${det} schede lette`;
 }
 
