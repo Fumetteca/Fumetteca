@@ -296,7 +296,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v32 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v33 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -632,7 +632,7 @@ note('Nessuna copertina trovata (provati: elenco e sito dell\'editore, Amazon, O
 
 // ---- Modifica
 function edit(v,nw){cur=v;isNew=nw;resetDel();note('');clearTimeout(urlTimer);vDone='';curlTok++;coverVal=String(v.cover||'');coverPhoto=null;
-const fld=([k,l,t])=>{let val=k=='series'?(v.series||v.title):v[k];if(k=='isbn'&&String(val||'').startsWith('man-'))val='';return `<label>${l}${t=='ta'?`<textarea name="${k}" rows="4">${esc(val)}</textarea>`:`<input name="${k}" ${t=='number'?'type="text" inputmode="numeric"':''}${k=='series'?' list="serlist" autocomplete="off"':''} value="${esc(val)}">`}</label>`};
+const fld=([k,l,t])=>{let val=k=='series'?(v.series||v.title):v[k];if(k=='isbn'&&/^(man|pub)-/.test(String(val||'')))val='';return `<label>${l}${t=='ta'?`<textarea name="${k}" rows="4">${esc(val)}</textarea>`:`<input name="${k}" ${t=='number'?'type="text" inputmode="numeric"':''}${k=='series'?' list="serlist" autocomplete="off"':''} value="${esc(val)}">`}</label>`};
 $('#dtitle').textContent=nw?'Nuovo volume':'Modifica volume'+(v.number!=null?' '+v.number:'');
 $('#fields').innerHTML='<label class="chk"><input type="checkbox" name="asSeries"'+(!nw&&v.cover&&scov[n(v.series||'')]===v.cover?' checked':'')+'>Usa questa copertina anche per la serie (sullo scaffale)</label>'+F.filter(f=>!FX.has(f[0])).map(fld).join('')+'<details class="more"><summary>Altri dettagli</summary>'+F.filter(f=>FX.has(f[0])).map(fld).join('')+'</details>'
 +'<div id="applyrow" hidden><input type="checkbox" name="applyall" checked><span id="applytxt"></span></div><datalist id="serlist">'+seriesList().map(s=>`<option value="${esc(s.name)}">`).join('')+'</datalist>';
@@ -767,7 +767,7 @@ function spine(v,s,big){if(v.gap||v.state=='new'){const up=!v.gap&&upcoming(v),o
 return `<div class="sp" style="${serStyle(s)}"${big?` data-v="${esc(v.isbn)}"`:''}><span class="t">${esc(s.name)}</span><b>${v.number??''}</b></div>`}
 function shelf(s,big){const items=[...s.own,...s.missing].sort(byNum);
 return `<div class="shelf${big?' big':''}" data-s="${s.key}"><div class="cell"><div class="books">${front(s,big)}${items.map(v=>spine(v,s,big)).join('')}</div></div><div class="edge">${big?`<span class="st" style="margin:0 auto">${s.own.length} ${s.own.length==1?'volume':'volumi'} sulla mensola</span>`:`<button class="tag" data-open="${s.key}"><span class="nm">${esc(s.name)}</span><span class="chev">›</span></button><span class="st">${s.own.length} vol.${s.missing.length?`<em>mancano ${s.missing.length}</em>`:''}</span><button class="dels" data-dels="${s.key}" aria-label="Elimina la serie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg></button>`}</div></div>`}
-function thumb(v,s){if(v.gap)return `<div class="th ghost">${v.number}</div>`;const src=coverSrc(v);
+function thumb(v,s){if(v.gap){const g=gapCov[s.key+'|'+v.number];return g?`<div class="th" style="${serStyle(s)}">${v.number}<img src="${esc(g)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div>`:`<div class="th ghost">${v.number}</div>`}const src=coverSrc(v);
 if(!src&&v.state=='new')return `<div class="th ghost nw">${v.number}</div>`;
 return `<div class="th" style="${serStyle(s)}">${v.number??''}${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>`}
 function missRow(v,s,ws){const id=v.gap?`g|${s.key}|${v.number}`:`i|${v.isbn}`,up=!v.gap&&upcoming(v);
@@ -826,8 +826,8 @@ $('#zadd').onclick=()=>{const s=seriesList().find(x=>x.key==zKey);if(s)edit({ser
 // ---- azioni
 function take(id){const[t,a,b]=id.split('|');let v;
 if(t=='i'){v=vols.find(x=>x.isbn==a);if(!v)return;v.state='owned';v.addedAt=Date.now()}
-else{const s=seriesList().find(x=>x.key==a);if(!s)return;const k=+b;v={isbn:'man-'+Date.now().toString(36),title:s.name+' '+k,series:s.name,number:k,authors:s.authors,publisher:s.pub,edition:s.ed,language:s.lang,date:'',pages:0,summary:'',cover:'',state:'owned',addedAt:Date.now()};vols.push(v)}
-const ok=persist();render();toast(ok?`✅ Vol. ${v.number} aggiunto alla collezione`:'⚠️ Aggiunto solo fino alla chiusura della pagina',ok?2200:5000)}
+else{const s=seriesList().find(x=>x.key==a);if(!s)return;const k=+b;v={isbn:'man-'+Date.now().toString(36),title:s.name+' '+k,series:s.name,number:k,authors:s.authors,publisher:s.pub,edition:s.ed,language:s.lang,date:'',pages:0,summary:'',cover:gapCov[s.key+'|'+k]||'',state:'owned',addedAt:Date.now()};vols.push(v)}
+const ok=persist();render();toast(ok?`✅ Vol. ${v.number} aggiunto alla collezione`:'⚠️ Aggiunto solo fino alla chiusura della pagina',ok?2200:5000);feedSync().catch(()=>{})}
 function skipIt(id){const[t,a,b]=id.split('|');if(t=='i'){const v=vols.find(x=>x.isbn==a);if(v)v.state='hidden';persist()}else{(skip[a]??=[]).push(+b);saveMeta()}render();toast('Nascosto')}
 function tab(t){const seg=$('#seg'),from=seg.dataset.on;if(from!==t&&!still()){const a=from=='new'?'100%':'0%',b=t=='new'?'100%':'0%',m=t=='new'?'50%':'50%';
 seg.querySelector('.ind').animate([{transform:`translateX(${a}) scale(1,1)`},{transform:`translateX(${m}) scale(1.22,.86)`,offset:.42},{transform:`translateX(${b}) scale(.97,1.04)`,offset:.75},{transform:`translateX(${b}) scale(1,1)`}],{duration:620,easing:'cubic-bezier(.3,.9,.3,1)'})}
@@ -909,6 +909,16 @@ try{const now=Date.now(),REPL=/books\.google|googleusercontent|anilist\.co|myani
 L=vols.filter(v=>v.state!='hidden'&&!v.coverManual&&(!v.cover||(!String(v.cover).startsWith('idb:')&&REPL.test(v.cover)))&&(v.isbn10||realIsbn(v)||pubOf(v.publisher))&&(force||!v.ac2At||now-v.ac2At>7*864e5));
 const fj=await scFeed();for(const v of L){const it=(fj&&fj.items.find(x=>x.isbn==v.isbn&&x.cover))||feedFind(fj,v.series,v.number,v.publisher),u=(it&&it.cover&&await tryImg(it.cover,false)?it.cover:'')||await amazonCover(v.isbn10||'',v.isbn);v.ac2At=Date.now();if(u){v.cover=u;got++;render()}}if(L.length)persist()}
 finally{acRun=false}return got}
+// copia subito dall'elenco degli editori copertine e ISBN dei volumi da comprare (senza aspettare il controllo giornaliero)
+const gapCov={};
+async function feedSync(){const fj=await scFeed();if(!fj)return 0;let ch=0;const byUrl=new Map(fj.items.map(x=>[x.url,x]));
+for(const v of vols){if(v.state=='hidden'||v.coverManual||(v.state=='owned'&&v.cover&&realIsbn(v)))continue;const own=v.state=='owned';
+const it=(v.pubUrl&&byUrl.get(v.pubUrl))||(realIsbn(v)&&fj.items.find(x=>x.isbn==v.isbn))||feedFind(fj,v.series,v.number,v.publisher);if(!it)continue;
+if(it.cover&&(!v.cover||(!own&&!String(v.cover).startsWith('idb:')&&v.cover!=it.cover&&!/media-amazon|images-amazon/.test(v.cover)))){v.cover=it.cover;ch++}
+if(isbnOk(it.isbn)&&!realIsbn(v)&&!vols.some(y=>y.isbn==it.isbn)){v.isbn=it.isbn;delete v.ac2At;ch++}
+if(!v.pubUrl){v.pubUrl=it.url;ch++}}
+for(const s of seriesList())if(pubOf(s.pub)&&s.gaps.length){const f=feedFor(s,fj);for(const g of s.gaps){const it=f.find(x=>x.number==g&&x.cover);if(it)gapCov[s.key+'|'+g]=it.cover}}
+if(ch)persist();render();return ch}
 const aiNote={};
 const isbnOk=i=>{i=String(i||'').replace(/[^0-9X]/gi,'');if(!/^97[89]\d{10}$/.test(i))return false;let t=0;for(let k=0;k<12;k++)t+=+i[k]*(k%2?3:1);return (10-t%10)%10==+i[12]};
 // ---- elimina un'intera serie (volumi, novità, copertina, impostazioni)
@@ -1083,6 +1093,6 @@ const sheetDrag=d=>{dragClose(d,()=>{if(d.id=='dlg')resetDel();d.close()});d.add
 let zNoAnim=false;
 dragClose($('#zoom'),()=>{zNoAnim=true;if(history.state&&history.state.z)history.back();else closeZoom()},{grabSel:'.znav',after:()=>$('#zoom').classList.remove('dragging')});
 document.querySelectorAll('dialog.sheet').forEach(sheetDrag);
-render();$('#warn').hidden=probe();setTimeout(async()=>{autoCovers();await check('auto')},1500);
+render();$('#warn').hidden=probe();setTimeout(async()=>{await feedSync().catch(()=>{});autoCovers();await check('auto')},1500);
 idb.all().then(o=>{for(const[k,v]of Object.entries(o)){try{if(typeof v=='string'&&v.startsWith('data:image/'))covers.set(k,v)}catch(e){}}render()}).catch(()=>{});
 </script></body></html>
