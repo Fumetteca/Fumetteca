@@ -190,6 +190,14 @@ dialog::backdrop{background:rgba(70,35,10,.22);-webkit-backdrop-filter:blur(5px)
 @keyframes rise{from{opacity:0;transform:translateY(10px) scale(.99)}}
 .lo{flex:1;margin:0;min-width:180px}.lo input{margin-top:6px}
 .ainote{margin:0 16px 14px;padding:12px 14px;border-radius:18px;background:rgba(236,106,18,.08);border:.5px solid rgba(236,106,18,.25);font-size:13px;color:var(--tx)}.ainote a{color:var(--ac-tx)}.ainote ul{margin:6px 0 0;padding-left:18px}
+.shelf{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.shelf img{-webkit-user-drag:none;-webkit-touch-callout:none}
+.shelf:not(.big) .sp,.shelf:not(.big) .fc{cursor:default}.shelf:not(.big) .fc img{pointer-events:none}
+.grab{position:sticky;top:6px;z-index:5;width:38px;height:5px}.grab::before{content:'';position:absolute;left:-80px;right:-80px;top:-16px;bottom:-22px}
+.sheet.dragging{animation:none!important}
+#scanbox{margin-top:12px;border-radius:24px;overflow:hidden;background:#000;box-shadow:0 0 0 0 rgba(48,209,88,0);transition:box-shadow .5s}
+#scanbox #reader{margin:0;border-radius:0}#scanbox video{display:block;width:100%!important}
+#scanbox.hit{animation:hit .7s ease}@keyframes hit{0%{box-shadow:0 0 0 0 rgba(48,209,88,.9)}30%{box-shadow:0 0 0 6px rgba(48,209,88,.9)}100%{box-shadow:0 0 0 0 rgba(48,209,88,0)}}
+#scanSt{margin:0;padding:10px 14px;background:var(--sheet);font-size:14px;color:var(--mu);min-height:1em}#scanSt.ok{color:var(--ok);font-weight:650}#scanSt.dup{color:var(--org);font-weight:600}#scanSt.err{color:var(--red);font-weight:600}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="bgfx"></div>
@@ -207,7 +215,7 @@ dialog::backdrop{background:rgba(70,35,10,.22);-webkit-backdrop-filter:blur(5px)
 <div id="zoom" hidden><div class="znav glass-bar"><button class="back" id="zback">‹ Collezione</button><b id="ztitle"></b><button class="circ pri" id="zadd" aria-label="Aggiungi un volume a questa serie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div><div id="zbody"></div></div>
 
 <dialog id="addDlg" class="sheet"><div class="grab"></div><h2>Aggiungi volumi</h2>
-<button class="bigb pri" id="scanbtn">Scansiona codice ISBN</button><div id="reader" hidden></div>
+<button class="bigb pri" id="scanbtn">Scansiona codice ISBN</button><div id="scanbox" hidden><div id="reader"></div><p id="scanSt"></p></div>
 <div class="row2"><input id="isbn" inputmode="numeric" placeholder="Oppure scrivi l'ISBN (10 o 13 cifre)"><button class="pill pri" id="addi">Aggiungi</button></div>
 <button class="bigb sec" id="man">Inserisci i dati a mano</button>
 <button class="bigb sec" id="imp">Importa da file .csv o .txt</button><input id="file" type="file" accept=".txt,.csv,text/plain,text/csv" hidden>
@@ -240,7 +248,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v24 · 22/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v26 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -289,17 +297,41 @@ if(!r&&!(down.ol>Date.now())){try{r=await ol(isbn);if(r)L('ℹ️ Trovato su Ope
 return r}
 
 // ---- Aggiunta
-async function addIsbn(i,batch){i=cleanIsbn(i);if(!i)return log('❌ ISBN non valido');
-const ex=vols.find(v=>v.isbn==i);
-if(ex){if(ex.state=='owned')return log('↩︎ Già in libreria: '+ex.title);ex.state='owned';ex.addedAt=Date.now();save();render();return log('✅ Aggiunto: '+ex.title)}
-log('🔎 '+i+'…');const r=await lookup(i);
-if(!r){log('❌ Non trovato: '+i+(batch?'':' — compila a mano'));return batch?0:edit({isbn:i,state:'owned'},true)}
-vols.push({...r,series:canon(r.series),state:'owned',addedAt:Date.now()});save();render();log('✅ Aggiunto: '+r.title);if(!batch)autoCovers()}
-async function scan(){if(sc)return stopScan();$('#reader').hidden=false;$('#scanbtn').textContent='Ferma lo scanner';
+async function addIsbn(i,batch,from){i=cleanIsbn(i);if(!i){log('❌ ISBN non valido');return{err:1}}
+const i10=to10(i),ex=vols.find(v=>v.isbn==i||(i10&&v.isbn10==i10));
+if(ex){if(ex.state=='owned'){log('↩︎ Già in collezione: '+ex.title);return{dup:1,v:ex}}
+ex.state='owned';ex.addedAt=Date.now();if(!realIsbn(ex))ex.isbn=i;rememberSer(ex);save();render();log('✅ Aggiunto: '+ex.title);if(!batch)autoCovers();return{ok:1,v:ex}}
+const fj=await scFeed(),fe=fj&&fj.items.find(x=>x.isbn==i);
+let r=fe?{title:fe.title,series:feedName(fe.title),number:fe.number!=null?+fe.number:null,publisher:PUBN[fe.pub]||'',date:fe.ann?'':(fe.date||''),cover:fe.cover||'',pages:fe.pages||0,language:'it',authors:'',edition:edOf(fe.title)}:null;
+if(!r){log('🔎 '+i+'…');r=await lookup(i,from=='scan')}
+if(r){const s=matchSeries(r);let o={...r,isbn:i,isbn10:i10||'',state:'owned',addedAt:Date.now()};
+if(s){o={...o,series:s.name,authors:s.authors||o.authors,publisher:s.pub||o.publisher,language:s.lang||o.language,edition:s.ed||o.edition||''};if(o.number==null)o.number=s.top+1;
+const nw=vols.find(v=>v.state!='owned'&&n(v.series)==s.key&&v.number==o.number);
+if(nw){o={...nw,...Object.fromEntries(Object.entries(o).filter(([k,x])=>x!==''&&x!=null)),cover:o.cover||nw.cover,state:'owned',addedAt:Date.now()};delete o.ann;vols=vols.filter(v=>v!==nw)}}
+else o.series=canon(o.series||'Da completare');
+o.title=o.series+(o.number!=null?' '+o.number:'');vols.push(o);rememberSer(o);save();render();log('✅ Aggiunto: '+o.title);if(!batch)autoCovers();return{ok:1,v:o}}
+log('❔ ISBN '+i+' non trovato nei cataloghi');if(batch)return{miss:1};
+const g=guessSeries();edit({isbn:i,state:'owned',...(g?{...serFields(g),number:g.top+1}:{})},true);
+note(g?`ISBN non trovato nei cataloghi: ho precompilato con «${g.name}», n. ${g.top+1}. Controlla e tocca Salva.`:'ISBN non trovato nei cataloghi: compila serie e numero e tocca Salva.');return{miss:1,form:1}}
+// ---- scanner continuo: appena legge un codice valido lo registra, poi aspetta il prossimo
+let scanN=0,scanPaused=false,actx=null;
+function beep(okk){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=okk?1180:420;g.gain.setValueAtTime(.15,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.18);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+.2)}catch(e){}try{navigator.vibrate&&navigator.vibrate(okk?60:[40,60,40])}catch(e){}}
+const scanMsg=(m,k)=>{const e=$('#scanSt');e.textContent=m;e.className=k||'';};
+async function onCode(t){const now=Date.now(),i=String(t||'').replace(/\D/g,'');if(!isbnOk(i))return;if(i==last&&now-lastT<5000)return;last=i;lastT=now;
+const box=$('#scanbox');box.classList.remove('hit');void box.offsetWidth;box.classList.add('hit');beep(true);scanMsg('⏳ '+i+'…');
+try{sc&&sc.pause(true);scanPaused=true}catch(e){}
+const r=await addIsbn(i,false,'scan');
+if(r.ok){scanN++;scanMsg(`✅ ${r.v.title} · registrato (${scanN} in questa sessione). Inquadra il prossimo.`,'ok')}
+else if(r.dup)scanMsg(`↩︎ ${r.v.title} è già in collezione. Inquadra il prossimo.`,'dup');
+else if(r.form){scanMsg('✍️ Non trovato: completa la scheda e salva, poi lo scanner riparte.');return}
+else scanMsg('⚠️ Codice non valido, riprova.','err');
+setTimeout(resumeScan,1200)}
+function resumeScan(){if(sc&&scanPaused&&!$('#dlg').open){try{sc.resume()}catch(e){}scanPaused=false;if(!/✅|↩︎/.test($('#scanSt').textContent))scanMsg('Inquadra il codice a barre del volume')}}
+async function scan(){if(sc)return stopScan();beep(true);$('#scanbox').hidden=false;$('#scanbtn').textContent='Ferma lo scanner';scanMsg('Inquadra il codice a barre del volume');scanN=0;
 sc=new Html5Qrcode('reader',{formatsToSupport:[Html5QrcodeSupportedFormats.EAN_13],experimentalFeatures:{useBarCodeDetectorIfSupported:true},verbose:false});
-try{await sc.start({facingMode:'environment'},{fps:10,qrbox:{width:260,height:120}},t=>{const now=Date.now();if(t==last&&now-lastT<6000)return;last=t;lastT=now;addIsbn(t)})}
-catch(e){log('Fotocamera non disponibile (serve HTTPS e il permesso)');stopScan()}}
-async function stopScan(){try{await sc?.stop()}catch(e){}sc=null;$('#reader').hidden=true;$('#scanbtn').textContent='Scansiona codice ISBN'}
+try{await sc.start({facingMode:'environment'},{fps:15,qrbox:(w,h)=>({width:Math.floor(w*.88),height:Math.max(80,Math.floor(Math.min(h*.45,w*.4)))}),disableFlip:true},onCode)}
+catch(e){scanMsg('📷 Fotocamera non disponibile: consenti l\'accesso alla fotocamera per questo sito (Impostazioni → Safari → Fotocamera) e riprova.','err');try{await sc.clear()}catch(x){}sc=null;$('#scanbtn').textContent='Scansiona codice ISBN'}}
+async function stopScan(){try{await sc?.stop()}catch(e){}sc=null;scanPaused=false;$('#scanbox').hidden=true;$('#scanbtn').textContent='Scansiona codice ISBN'}
 
 // ---- CSV
 function parseCSV(t){t=t.replace(/^\uFEFF/,'');const l=t.split('\n')[0],d=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?';':',';
@@ -552,10 +584,10 @@ note('Nessuna copertina trovata online. Scegli una foto dal telefono.','err')}
 
 // ---- Modifica
 function edit(v,nw){cur=v;isNew=nw;resetDel();note('');clearTimeout(urlTimer);vDone='';curlTok++;coverVal=String(v.cover||'');coverPhoto=null;
-const fld=([k,l,t])=>{let val=k=='series'?(v.series||v.title):v[k];if(k=='isbn'&&String(val||'').startsWith('man-'))val='';return `<label>${l}${t=='ta'?`<textarea name="${k}" rows="4">${esc(val)}</textarea>`:`<input name="${k}" ${t=='number'?'type="text" inputmode="numeric"':''} value="${esc(val)}">`}</label>`};
+const fld=([k,l,t])=>{let val=k=='series'?(v.series||v.title):v[k];if(k=='isbn'&&String(val||'').startsWith('man-'))val='';return `<label>${l}${t=='ta'?`<textarea name="${k}" rows="4">${esc(val)}</textarea>`:`<input name="${k}" ${t=='number'?'type="text" inputmode="numeric"':''}${k=='series'?' list="serlist" autocomplete="off"':''} value="${esc(val)}">`}</label>`};
 $('#dtitle').textContent=nw?'Nuovo volume':'Modifica volume'+(v.number!=null?' '+v.number:'');
 $('#fields').innerHTML='<label class="chk"><input type="checkbox" name="asSeries"'+(!nw&&v.cover&&scov[n(v.series||'')]===v.cover?' checked':'')+'>Usa questa copertina anche per la serie (sullo scaffale)</label>'+F.filter(f=>!FX.has(f[0])).map(fld).join('')+'<details class="more"><summary>Altri dettagli</summary>'+F.filter(f=>FX.has(f[0])).map(fld).join('')+'</details>'
-+'<div id="applyrow" hidden><input type="checkbox" name="applyall" checked><span id="applytxt"></span></div>';
++'<div id="applyrow" hidden><input type="checkbox" name="applyall" checked><span id="applytxt"></span></div><datalist id="serlist">'+seriesList().map(s=>`<option value="${esc(s.name)}">`).join('')+'</datalist>';
 showCover();$('#del').hidden=nw;$('#dlg').showModal()}
 $('#frm').addEventListener('input',e=>{const t=e.target;
 if(t.id==='curl'){coverPhoto=null;coverVal=cleanUrl(t.value);clearTimeout(urlTimer);if(/^https:\/\/[^\/\s]+\.[^\/\s]+\/\S+/.test(coverVal))urlTimer=setTimeout(()=>verifyUrl(false),900);return}
@@ -574,7 +606,9 @@ if(!$('#dlg').open||tk!==curlTok)return;
 if(r.copied){applyPulled(r,u);note('✅ Immagine copiata sul telefono: tocca Salva')}
 else if(r.linked){applyPulled(r,u);note('ℹ️ Immagine solo collegata, non copiata: se il sito la toglie sparirà. Più sicuro salvarla in Foto e usare «📷 Foto dal telefono».')}
 else{drawCover();note('⚠️ Non riesco a caricare questa immagine: il sito la blocca oppure l\'indirizzo è scaduto o sbagliato. Tieni premuto sull\'immagine, salvala in Foto e poi usa «📷 Foto dal telefono».','err')}}
-$('#frm').addEventListener('change',e=>{if(e.target.id==='curl')verifyUrl(true)});
+$('#frm').addEventListener('change',e=>{if(e.target.id==='curl')verifyUrl(true);
+if(e.target.name==='series'&&isNew){const s=seriesList().find(x=>n(x.name)==n(e.target.value));if(!s)return;const f=$('#frm');
+for(const[k,v]of Object.entries(serFields(s)))if(k!='series'&&f.elements[k])f.elements[k].value=v||'';if(f.elements.number)f.elements.number.value=s.top+1;note(`Dati di «${s.name}» compilati, numero ${s.top+1}.`)}});
 $('#cpick').onclick=()=>$('#cfile').click();
 $('#cfile').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const nm='«'+(f.name||'foto').slice(0,40)+'»';note('⏳ Elaboro '+nm+'…');
 try{const d=await shrink(f);coverPhoto=d;coverVal='';vDone='';showCover();note('✅ Foto pronta: tocca Salva')}catch(x){note('⚠️ '+nm+': '+x.message,'err')}
@@ -601,7 +635,7 @@ o.cover=cid||coverVal;
 if(d.get('asSeries')&&o.cover){scov[n(o.series)]=o.cover;saveScov()}
 const oc=String(cur.cover||'');if(oc.startsWith('idb:')&&oc!==o.cover&&!Object.values(scov).includes(oc)){covers.delete(oc);idb.del(oc).catch(()=>{})}
 o.manual=1;if(String(o.cover||'')!==String(cur.cover||''))o.coverManual=o.cover?1:0;
-if(isNew){o.addedAt=Date.now();o.state=o.state||'owned';vols.push(o)}else Object.assign(cur,o);
+if(isNew){o.addedAt=Date.now();o.state=o.state||'owned';vols.push(o)}else Object.assign(cur,o);rememberSer(o);
 const ok=persist();render();$('#dlg').close();
 toast(idbFail?'⚠️ Foto salvata solo fino alla chiusura della pagina':ok?'✅ Salvato':'⚠️ Salvato solo fino alla chiusura della pagina',ok&&!idbFail?2200:5000)}
 catch(err){note('⚠️ Errore: '+err.message,'err')}
@@ -612,6 +646,7 @@ vols=vols.filter(v=>v!==cur);const ok=persist();render();$('#dlg').close();toast
 $('#sv').onclick=e=>{e.preventDefault();doSave()};
 $('#frm').onsubmit=e=>{e.preventDefault();doSave()};
 $('#cx').onclick=()=>{resetDel();$('#dlg').close()};
+$('#dlg').addEventListener('close',()=>setTimeout(resumeScan,300));
 $('#del').onclick=doDelete;
 
 // ==== Serie, mancanti, nuove uscite
@@ -640,17 +675,25 @@ s.nw=s.nw.filter(v=>v.number!=null&&!nums.has(v.number)).sort(byNum);const nwN=n
 s.known=+(lastOut[s.key]||0);s.gaps=[];for(let i=1;i<=Math.max(s.top-1,s.known)&&s.gaps.length<200;i++)if(!nums.has(i)&&!nwN.has(i)&&!sk.has(i))s.gaps.push(i);
 s.missing=[...s.gaps.map(i=>({gap:1,number:i,out:i>s.top})),...s.nw].sort(byNum);return s}).sort((a,b)=>a.name.localeCompare(b.name,'it'))}
 
+// ---- dati della serie per i nuovi volumi
+const serFields=s=>({series:s.name,authors:s.authors,publisher:s.pub,language:s.lang,edition:s.ed});
+const feedName=t=>String(t||'').replace(/\s*-\s*Panini Comics\s*$/i,'').replace(/\s*[,.:-]?\s*\b(?:n\.?|vol\.?|volume)\s*\d{1,4}\b.*$/i,'').replace(/\s+\d{1,4}\s*$/,'').trim();
+function matchSeries(r){const L=seriesList(),pk=pubOf(r.publisher);
+return L.find(s=>n(s.name)==n(r.series))||L.find(s=>(!pk||!pubOf(s.pub)||pubOf(s.pub)==pk)&&(sameSeries(s.name,r.series||'')||sameSeries(s.name,r.title||'')))||null}
+const rememberSer=v=>{try{localStorage.setItem('fumetteca_lastser',n(v.series||''))}catch(e){}};
+function guessSeries(){const L=seriesList();let k='';try{k=localStorage.getItem('fumetteca_lastser')||''}catch(e){}
+return L.find(s=>s.key==k)||L.slice().sort((a,b)=>Math.max(...b.own.map(v=>v.addedAt||0))-Math.max(...a.own.map(v=>v.addedAt||0)))[0]||null}
 // ---- pezzi grafici
 const ini=s=>esc(String(s||'').slice(0,40));
 let scov={};try{scov=JSON.parse(localStorage.getItem('fumetteca_scov')||'{}')}catch(e){}
 const saveScov=()=>{try{localStorage.setItem('fumetteca_scov',JSON.stringify(scov));return true}catch(e){return false}};
 // copertina della serie: quella scelta, altrimenti la copertina del primo volume che ne ha una
 const scSrc=s=>{const c=scov[s.key];if(c)return c.startsWith('idb:')?covers.get(c)||'':c;const v=s.own.find(v=>coverSrc(v));return v?coverSrc(v):''};
-function front(s,big){const src=scSrc(s);return `<div class="fc" style="--h:${s.h}" ${big?'data-sc':'data-open'}="${s.key}"><i>${esc(s.name)}</i>${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('bad');this.remove()">`:''}${big?'<span class="edit">Cambia</span>':''}</div>`}
-function spine(v,s){if(v.gap||v.state=='new'){const up=!v.gap&&upcoming(v),old=v.gap||v.number<s.top;return `<div class="sp ghost${old?'':' nw'}" data-open="${s.key}"><span class="t">${old?'manca':up?esc(fmtD(v.date)):'uscito'}</span><b>${v.number}</b></div>`}
-return `<div class="sp" style="--h:${s.h}" data-v="${esc(v.isbn)}"><span class="t">${esc(s.name)}</span><b>${v.number??''}</b></div>`}
+function front(s,big){const src=scSrc(s);return `<div class="fc" style="--h:${s.h}" ${big?`data-sc="${s.key}"`:''}><i>${esc(s.name)}</i>${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('bad');this.remove()">`:''}${big?'<span class="edit">Cambia</span>':''}</div>`}
+function spine(v,s,big){if(v.gap||v.state=='new'){const up=!v.gap&&upcoming(v),old=v.gap||v.number<s.top;return `<div class="sp ghost${old?'':' nw'}"><span class="t">${old?'manca':up?esc(fmtD(v.date)):'uscito'}</span><b>${v.number}</b></div>`}
+return `<div class="sp" style="--h:${s.h}"${big?` data-v="${esc(v.isbn)}"`:''}><span class="t">${esc(s.name)}</span><b>${v.number??''}</b></div>`}
 function shelf(s,big){const items=[...s.own,...s.missing].sort(byNum);
-return `<div class="shelf${big?' big':''}" data-s="${s.key}"><div class="cell"><div class="books">${front(s,big)}${items.map(v=>spine(v,s)).join('')}</div></div><div class="edge">${big?`<span class="st" style="margin:0 auto">${s.own.length} ${s.own.length==1?'volume':'volumi'} sulla mensola</span>`:`<button class="tag" data-open="${s.key}"><span class="nm">${esc(s.name)}</span><span class="chev">›</span></button><span class="st">${s.own.length} vol.${s.missing.length?`<em>mancano ${s.missing.length}</em>`:''}</span><button class="dels" data-dels="${s.key}" aria-label="Elimina la serie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg></button>`}</div></div>`}
+return `<div class="shelf${big?' big':''}" data-s="${s.key}"><div class="cell"><div class="books">${front(s,big)}${items.map(v=>spine(v,s,big)).join('')}</div></div><div class="edge">${big?`<span class="st" style="margin:0 auto">${s.own.length} ${s.own.length==1?'volume':'volumi'} sulla mensola</span>`:`<button class="tag" data-open="${s.key}"><span class="nm">${esc(s.name)}</span><span class="chev">›</span></button><span class="st">${s.own.length} vol.${s.missing.length?`<em>mancano ${s.missing.length}</em>`:''}</span><button class="dels" data-dels="${s.key}" aria-label="Elimina la serie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg></button>`}</div></div>`}
 function thumb(v,s){if(v.gap)return `<div class="th ghost">${v.number}</div>`;const src=coverSrc(v);
 if(!src&&v.state=='new')return `<div class="th ghost nw">${v.number}</div>`;
 return `<div class="th" style="--h:${s.h}">${v.number??''}${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>`}
@@ -743,7 +786,7 @@ $('#menuImp').onclick=()=>{$('#menuDlg').close();openAdd();$('#file').click()};
 $('#exp').onclick=()=>{$('#menuDlg').close();exportCSV()};
 $('#q').oninput=renderLib;$('#scanbtn').onclick=scan;
 $('#addi').onclick=()=>{addIsbn($('#isbn').value);$('#isbn').value=''};$('#isbn').onkeydown=e=>{if(e.key=='Enter'){e.preventDefault();$('#addi').click()}};
-$('#man').onclick=()=>{$('#addDlg').close();edit({state:'owned'},true)};
+$('#man').onclick=()=>{$('#addDlg').close();const g=guessSeries();edit({state:'owned',...(g?{...serFields(g),number:g.top+1}:{})},true);if(g)note(`Precompilato con «${g.name}», n. ${g.top+1}. Se è un'altra serie, cambia il nome: scegliendone una tua si compila il resto.`)};
 $('#imp').onclick=()=>$('#file').click();$('#file').onchange=async e=>{const f=e.target.files[0];if(f){const t=await f.text();e.target.value='';importText(t)}};
 $('#chk-b').onclick=()=>check();
 let scKey=null,scVal='',scPhoto=null,scTok=0;
@@ -816,6 +859,22 @@ vols=keep;const ok=persist();saveScov();saveMeta();$('#dsDlg').close();dsKey=nul
 if(!$('#zoom').hidden){if(history.state&&history.state.z)history.back();else closeZoom()}
 render();toast(ok?`🗑 Serie eliminata (${gone.length} volumi)`:'⚠️ Eliminata solo fino alla chiusura della pagina',ok?2600:5000)};
 $('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
+// ---- fogli: trascinando verso il basso (dal trattino, o da qualsiasi punto quando il foglio è in cima) si chiudono
+function sheetDrag(d){let y0=0,x0=0,dy=0,on=false,arm=false,t0=0,last=0,grab=false;
+const closeIt=()=>{if(d.id=='dlg'){resetDel();d.close()}else d.close()};
+d.addEventListener('touchstart',e=>{if(e.touches.length!=1){arm=false;return}const t=e.target;
+if(t.closest('input,textarea,select,.scvs,#reader'))return;grab=!!t.closest('.grab');if(d.scrollTop>2&&!grab)return;
+y0=e.touches[0].clientY;x0=e.touches[0].clientX;dy=0;arm=true;on=false;t0=Date.now()},{passive:true});
+d.addEventListener('touchmove',e=>{if(!arm)return;const y=e.touches[0].clientY-y0,x=e.touches[0].clientX-x0;
+if(!on){if(y>8&&y>Math.abs(x)*1.2&&(grab||d.scrollTop<=2)){on=true;d.classList.add('dragging');d.style.transition='none';y0+=8}else{if(y<-4||Math.abs(x)>12)arm=false;return}}
+dy=Math.max(0,e.touches[0].clientY-y0);d.style.transform=`translateY(${dy}px)`;e.preventDefault()},{passive:false});
+const end=()=>{if(!arm)return;arm=false;if(!on)return;on=false;last=Date.now();const v=dy/Math.max(1,Date.now()-t0);
+if(dy>110||(v>.7&&dy>40)){d.style.transition='transform .22s ease-in';d.style.transform='translateY(110%)';setTimeout(()=>{closeIt();d.style.transition='';d.style.transform=''},220)}
+else{d.style.transition='transform .4s cubic-bezier(.2,1.25,.3,1)';d.style.transform='';setTimeout(()=>{d.style.transition=''},420)}};
+d.addEventListener('close',()=>d.classList.remove('dragging'));
+d.addEventListener('touchend',end);d.addEventListener('touchcancel',end);
+d.addEventListener('click',e=>{if(Date.now()-last<400){e.stopPropagation();e.preventDefault()}},true)}
+document.querySelectorAll('dialog.sheet').forEach(sheetDrag);
 render();$('#warn').hidden=probe();setTimeout(async()=>{autoCovers();await check('auto')},1500);
 idb.all().then(o=>{for(const[k,v]of Object.entries(o)){try{if(typeof v=='string'&&v.startsWith('data:image/'))covers.set(k,v)}catch(e){}}render()}).catch(()=>{});
 </script></body></html>
