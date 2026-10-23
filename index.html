@@ -226,7 +226,9 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 #applyrow[hidden],[hidden]{display:none!important}
 #accB{position:relative}#accB .dot{position:absolute;right:6px;top:6px;width:10px;height:10px;border-radius:50%;background:#9a9aa2;border:2px solid var(--bg)}
 #accB[data-st=ok] .dot{background:var(--ok)}#accB[data-st=busy] .dot{background:var(--org)}#accB[data-st=err] .dot{background:var(--red)}
-#auMsg.font-ok{color:var(--ok)}#auMsg.font-ko{color:var(--red)}
+#authDlg .cap,#menuDlg .cap,#lock .cap{word-break:normal;overflow-wrap:anywhere}#auMsg.font-ok{color:var(--ok)}#auMsg.font-ko{color:var(--red)}
+#lock{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:24px;background:color-mix(in srgb,var(--bg) 70%,transparent);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%)}
+#lock[hidden]{display:none!important}.lockin{width:min(360px,100%);text-align:center;padding:28px 22px;border-radius:var(--Rs);background:linear-gradient(180deg,var(--gl1),var(--glass));border:.5px solid var(--glb);box-shadow:inset 0 1px 1px var(--gli),0 20px 50px -20px var(--gls)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="bgfx"></div>
@@ -270,12 +272,20 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 <dialog id="dsDlg" class="sheet"><div class="grab"></div><h2 id="dsTitle">Eliminare la serie?</h2><p id="dsInfo"></p>
 <button class="bigb danger" id="dsOk">Elimina la serie</button><button class="bigb sec" id="dsCx">Annulla</button><div class="sheet-end"></div></dialog>
 <dialog id="authDlg" class="sheet"><div class="grab"></div><h2 id="auTitle">Account</h2><p class="hint" id="auHint" style="margin:-6px 2px 10px"></p>
-<div id="auForm"><label>Email<input id="auEmail" type="email" autocomplete="email" autocapitalize="off" autocorrect="off" inputmode="email"></label><label>Password<input id="auPw" type="password" autocomplete="current-password"></label>
-<button class="bigb pri" id="auIn" style="margin-top:16px">Accedi</button><button class="bigb sec" id="auUp">Crea un nuovo account</button><button class="link" id="auForgot" style="display:block;margin:12px auto 0">Password dimenticata?</button></div>
+<form id="auForm" method="post" action="#" autocomplete="on" novalidate>
+<div class="seg glass" id="auSeg" data-on="lib" style="margin:2px 0 6px"><i class="ind"></i><button type="button" data-au="in" class="on">Accedi</button><button type="button" data-au="up">Registrati</button></div>
+<label>Email<input id="auEmail" name="email" type="email" autocomplete="username email" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email" required></label>
+<label>Password<input id="auPw" name="password" type="password" autocomplete="current-password" required minlength="6"></label>
+<p class="cap" id="auBio" style="margin-top:8px">🔐 Su iPhone la password viene salvata nel Portachiavi: le volte successive la inserisce Face ID o Touch ID.</p>
+<button type="submit" class="bigb pri" id="auGo" style="margin-top:12px">Accedi</button>
+<button type="button" class="link" id="auForgot" style="display:block;margin:12px auto 0">Password dimenticata?</button>
+<button type="button" class="bigb sec" id="auSkip" hidden style="margin-top:14px">Continua senza account</button></form>
 <div id="auNew" hidden><label>Nuova password<input id="auPw2" type="password" autocomplete="new-password"></label><button class="bigb pri" id="auSetPw" style="margin-top:16px">Salva la nuova password</button></div>
-<div id="auLogged" hidden><p id="auWho" style="margin:4px 2px"></p><p class="cap" id="auSync"></p><button class="bigb pri" id="auSyncB">Sincronizza ora</button><button class="bigb delbig" id="auOut" style="justify-content:center">Esci da questo dispositivo</button>
+<div id="auLogged" hidden><p id="auWho" style="margin:4px 2px"></p><p class="cap" id="auSync"></p><label class="chk" id="bioRow" hidden><input type="checkbox" id="bioT"><span id="bioTxt">Blocca l'app con Face ID</span></label><p class="cap" id="bioCap" hidden></p><button class="bigb pri" id="auSyncB">Sincronizza ora</button><button class="bigb delbig" id="auOut" style="justify-content:center">Esci da questo dispositivo</button>
 <p class="cap">Uscendo, i dati vengono tolti da questo dispositivo ma restano salvati sul server.</p></div>
 <p id="auMsg" class="cap"></p><div class="sheet-end"></div></dialog>
+<div id="lock" hidden><div class="lockin"><h1 style="margin-bottom:6px">📚 Fumetteca</h1><p class="hint" id="lockWho" style="margin:0 0 22px"></p>
+<button class="bigb pri" id="lockGo">Sblocca</button><button type="button" class="link" id="lockPw" style="display:block;margin:16px auto 0">Usa email e password</button><p class="cap" id="lockMsg" style="text-align:center"></p></div></div>
 <div id="toast" class="glass" hidden></div>
 <script>window.__cfg="assente"</script><script src="config.js" onload="window.__cfg=window.FUMETTECA_CONFIG?'ok':'errore'" onerror="window.__cfg='non trovato'"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -285,7 +295,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v30 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v31 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -897,7 +907,7 @@ if(!$('#zoom').hidden){if(history.state&&history.state.z)history.back();else clo
 render();toast(ok?`🗑 Serie eliminata (${gone.length} volumi)`:'⚠️ Eliminata solo fino alla chiusura della pagina',ok?2600:5000)};
 $('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
 // ==== Account e sincronizzazione (Supabase): ognuno ha la sua libreria privata, uguale su tutti i suoi dispositivi ====
-const CFG=window.FUMETTECA_CONFIG||{},CL={url:String(CFG.supabaseUrl||'').trim().replace(/\/+$/,''),key:String(CFG.supabaseKey||'').trim()};
+const hadLinkToken=location.hash.includes('access_token'),CFG=window.FUMETTECA_CONFIG||{},CL={url:String(CFG.supabaseUrl||'').trim().replace(/\/+$/,''),key:String(CFG.supabaseKey||'').trim()};
 let cfgWhy='';
 async function cfgRescue(){if(CL.url&&CL.key)return;let t='';try{const r=await fetch('config.js?t='+Date.now());if(!r.ok){cfgWhy=r.status==404?'il file config.js non si trova accanto a index.html (controlla nome e cartella su GitHub)':'config.js non leggibile (HTTP '+r.status+')';return}t=await r.text()}catch(e){cfgWhy='config.js non leggibile da questa pagina';return}
 const g=k=>{const m=t.match(new RegExp(k+'\\s*:\\s*[\'"‘’“”`]\\s*([^\'"‘’“”`\\s]*)\\s*[\'"‘’“”`]'));return m?m[1].trim():''};
@@ -965,21 +975,58 @@ const st=!auth?'off':syncErr?'err':(syncing||pushT)?'busy':'ok';b.dataset.st=st;
 b.setAttribute('aria-label',!auth?'Accedi':'Account: '+auth.user.email);
 const d=$('#authDlg');if(!d)return;$('#auForm').hidden=!!auth||!$('#auNew').hidden;$('#auLogged').hidden=!auth;
 if(auth){$('#auWho').innerHTML='Connesso come <b>'+esc(auth.user.email)+'</b>';$('#auSync').textContent=syncErr?'⚠️ Ultima sincronizzazione non riuscita: '+syncErr:syncing?'⏳ Sincronizzo…':syncAt?'✅ Sincronizzato '+new Date(syncAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+' · '+vols.filter(v=>v.state=='owned').length+' volumi':'In attesa di sincronizzazione'}}
-function openAuth(mode){const d=$('#authDlg');$('#auNew').hidden=mode!='recovery';auMsg('');
-$('#auTitle').textContent=mode=='recovery'?'Nuova password':auth?'Il tuo account':'Accedi o crea un account';
+function openAuth(mode){const d=$('#authDlg');$('#auNew').hidden=mode!='recovery';auMsg('');$('#auSkip').hidden=mode!='first';if(mode=='first')setAuMode(vols.length?'up':'in');
+$('#auTitle').textContent=mode=='recovery'?'Nuova password':auth?'Il tuo account':mode=='first'?'Benvenuto nella Fumetteca':'Accedi o crea un account';
 $('#auHint').textContent=auth?'La tua collezione è salvata sul server: la ritrovi su ogni dispositivo in cui accedi.':mode=='recovery'?'Scegli la nuova password per il tuo account.':'Con un account la tua collezione è salvata sul server e la ritrovi su telefono, PC e tablet. I volumi già presenti su questo dispositivo vengono uniti al tuo account.';
-cloudUI();if(!d.open)d.showModal()}
+cloudUI();bioUI();if(!d.open)d.showModal();if(!auth&&mode!='recovery')autoFill()}
 async function busy(btn,fn){const t=btn.textContent;btn.disabled=true;btn.textContent='…';try{await fn()}catch(e){auMsg('⚠️ '+e.message,'font-ko')}finally{btn.disabled=false;btn.textContent=t}}
+let auMode='in';
+function setAuMode(m){auMode=m;const seg=$('#auSeg');seg.dataset.on=m=='up'?'new':'lib';seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.au==m));
+$('#auPw').setAttribute('autocomplete',m=='up'?'new-password':'current-password');$('#auGo').textContent=m=='up'?'Crea il mio account':'Accedi';$('#auForgot').hidden=m=='up';
+$('#auBio').textContent=m=='up'?'🔐 Su iPhone puoi usare la password sicura suggerita: viene salvata nel Portachiavi e le volte successive la inserisce Face ID o Touch ID.':'🔐 Se la password è salvata nel Portachiavi, toccando il campo iPhone la inserisce con Face ID o Touch ID.';auMsg('')}
+$('#auSeg').addEventListener('click',e=>{const b=e.target.closest('[data-au]');if(b)setAuMode(b.dataset.au)});
 const creds=()=>{const e=$('#auEmail').value.trim(),p=$('#auPw').value;if(!/^\S+@\S+\.\S+$/.test(e))throw Error('Scrivi un indirizzo email valido.');if(p.length<6)throw Error('La password deve avere almeno 6 caratteri.');return[e,p]};
 const here=()=>location.href.split('#')[0];
-$('#auIn').onclick=e=>busy(e.currentTarget,async()=>{const[em,pw]=creds();setAuth(await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email:em,password:pw},useAuth:false}));$('#auPw').value='';auMsg('✅ Accesso effettuato: unisco e sincronizzo la tua collezione…','font-ok');await sync();openAuth();toast('✅ Collezione sincronizzata',2500)});
-$('#auUp').onclick=e=>busy(e.currentTarget,async()=>{const[em,pw]=creds();const j=await api('/auth/v1/signup?redirect_to='+encodeURIComponent(here()),{method:'POST',body:{email:em,password:pw},useAuth:false});
-if(j&&j.access_token){setAuth(j);$('#auPw').value='';await sync();openAuth();auMsg('✅ Account creato: la tua collezione è salvata sul server.','font-ok')}else auMsg('📧 Ti abbiamo mandato un\'email: apri il link per confermare l\'account, poi torna qui e tocca «Accedi».','font-ok')});
+async function doLogin(){const[em,pw]=creds();setAuth(await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email:em,password:pw},useAuth:false}));rememberCred(em,pw);$('#auPw').value='';try{localStorage.removeItem('fumetteca_noacc')}catch(e){}
+auMsg('✅ Accesso effettuato: unisco e sincronizzo la tua collezione…','font-ok');await sync();openAuth();toast('✅ Bentornato! Collezione sincronizzata',2500)}
+async function doSignup(){const[em,pw]=creds();const j=await api('/auth/v1/signup?redirect_to='+encodeURIComponent(here()),{method:'POST',body:{email:em,password:pw},useAuth:false});try{localStorage.removeItem('fumetteca_noacc')}catch(e){}
+if(j&&j.access_token){setAuth(j);rememberCred(em,pw);$('#auPw').value='';await sync();openAuth();auMsg('✅ Account creato: la tua collezione è salvata sul server.','font-ok')}
+else{lsSet('fumetteca_lastemail',em);setAuMode('in');auMsg('📧 Ti abbiamo mandato un\'email: apri il link per confermare l\'account. Poi torna qui e tocca «Accedi» (la password la inserisce Face ID dal Portachiavi).','font-ok')}}
+$('#auForm').addEventListener('submit',e=>{e.preventDefault();busy($('#auGo'),auMode=='up'?doSignup:doLogin)});
+$('#auSkip').onclick=()=>{try{localStorage.setItem('fumetteca_noacc','1')}catch(e){}$('#authDlg').close();toast('Ok: la collezione resta su questo dispositivo. Puoi accedere quando vuoi dall\'icona della persona.',4000)};
 $('#auForgot').onclick=e=>busy(e.currentTarget,async()=>{const em=$('#auEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(em))throw Error('Scrivi prima la tua email qui sopra.');await api('/auth/v1/recover?redirect_to='+encodeURIComponent(here()),{method:'POST',body:{email:em},useAuth:false});auMsg('📧 Se l\'email è registrata, riceverai un link per scegliere una nuova password.','font-ok')});
 $('#auSetPw').onclick=e=>busy(e.currentTarget,async()=>{const p=$('#auPw2').value;if(p.length<6)throw Error('La password deve avere almeno 6 caratteri.');await api('/auth/v1/user',{method:'PUT',body:{password:p}});$('#auPw2').value='';$('#auNew').hidden=true;auMsg('✅ Password cambiata.','font-ok');openAuth();sync()});
 $('#auSyncB').onclick=e=>busy(e.currentTarget,async()=>{await sync();if(syncErr)throw Error(syncErr);auMsg('✅ Sincronizzato','font-ok')});
 $('#auOut').onclick=e=>busy(e.currentTarget,async()=>{await sync().catch(()=>{});try{await api('/auth/v1/logout',{method:'POST'})}catch(x){}setAuth(null);wipeLocal();$('#authDlg').close();toast('Sei uscito: la collezione resta salvata sul server',3500)});
 $('#accB').onclick=()=>openAuth();
+// ==== Email ricordata, password salvate (Android) e sblocco biometrico (Face ID / Touch ID / impronta) ====
+const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1),isAnd=/Android/i.test(navigator.userAgent);
+const bioName=isIOS?'Face ID / Touch ID':isAnd?'impronta o riconoscimento del volto':'la biometria del dispositivo';
+function rememberCred(em,pw){lsSet('fumetteca_lastemail',em);try{if(window.PasswordCredential)navigator.credentials.store(new PasswordCredential({id:em,password:pw,name:em})).catch(()=>{})}catch(e){}}
+async function autoFill(){try{const em=localStorage.getItem('fumetteca_lastemail');if(em&&!$('#auEmail').value)$('#auEmail').value=em}catch(e){}
+if(!window.PasswordCredential||auth)return;try{const c=await navigator.credentials.get({password:true,mediation:'optional'});if(c&&c.password&&!auth){$('#auEmail').value=c.id;$('#auPw').value=c.password;setAuMode('in');busy($('#auGo'),doLogin)}}catch(e){}}
+const b64u=a=>btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64u=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+let bio=null;try{bio=JSON.parse(localStorage.getItem('fumetteca_bio')||'null')}catch(e){}
+async function bioAvail(){try{return !!(window.PublicKeyCredential&&window.isSecureContext&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
+async function bioEnable(){const em=auth?auth.user.email:'Fumetteca';
+const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Fumetteca',id:location.hostname},user:{id:rnd(16),name:em,displayName:em},
+pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}});
+bio={id:b64u(c.rawId),email:em,at:Date.now()};lsSet('fumetteca_bio',bio)}
+async function bioCheck(){await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:unb64u(bio.id),transports:['internal','hybrid']}],userVerification:'required',timeout:60000}})}
+async function bioUI(){const ok=!!auth&&await bioAvail();$('#bioRow').hidden=!ok;$('#bioCap').hidden=!ok;if(!ok)return;$('#bioTxt').textContent='Blocca l\'app con '+bioName;$('#bioT').checked=!!bio;
+$('#bioCap').textContent=bio?'All\'apertura la Fumetteca chiede '+bioName+' prima di mostrare la collezione.':'Facoltativo: all\'apertura la Fumetteca chiederà '+bioName+'. Nessun dato biometrico passa dalla pagina o dal server.'}
+$('#bioT').onchange=async e=>{const t=e.target;if(t.checked){try{await bioEnable();auMsg('✅ Sblocco con '+bioName+' attivato.','font-ok')}catch(x){t.checked=false;auMsg('⚠️ '+(x.name=='NotAllowedError'?'Operazione annullata o non consentita.':'Questo dispositivo non lo permette: '+x.message),'font-ko')}}
+else{bio=null;try{localStorage.removeItem('fumetteca_bio')}catch(x){}auMsg('Sblocco biometrico disattivato.')}bioUI()};
+let locked=false,hidAt=0;
+function showLock(){if(!bio||!auth)return;locked=true;document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('#lockWho').textContent=auth.user.email;$('#lockGo').textContent='Sblocca con '+bioName;$('#lockMsg').textContent='';$('#lock').hidden=false;document.body.classList.add('lock')}
+async function tryUnlock(){if(!locked)return;$('#lockMsg').textContent='';try{await bioCheck();locked=false;$('#lock').hidden=true;if($('#zoom').hidden)document.body.classList.remove('lock');if(auth)sync()}
+catch(e){$('#lockMsg').textContent=e.name=='NotAllowedError'?'Tocca «Sblocca» per riprovare.':'Sblocco non riuscito: '+e.message}}
+$('#lockGo').onclick=tryUnlock;
+$('#lockPw').onclick=async()=>{const em=auth?auth.user.email:'';try{await api('/auth/v1/logout',{method:'POST'})}catch(x){}setAuth(null);wipeLocal();bio=null;try{localStorage.removeItem('fumetteca_bio')}catch(x){}
+locked=false;$('#lock').hidden=true;document.body.classList.remove('lock');lsSet('fumetteca_lastemail',em);openAuth();setAuMode('in');$('#auEmail').value=em;auMsg('Accedi con la password: la collezione torna dal server.')};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden')hidAt=Date.now();else if(bio&&auth&&!locked&&hidAt&&Date.now()-hidAt>2*6e4){showLock();tryUnlock()}});
 // link arrivati per email (conferma account o nuova password)
 cfgRescue().then(async()=>{if(!cloudOn())return;const h=new URLSearchParams(location.hash.slice(1));
 if(h.get('error_description')){toast('⚠️ '+h.get('error_description').replace(/\+/g,' '),5000);history.replaceState(null,'',here());return}
@@ -988,7 +1035,7 @@ try{const u=await (await fetch(CL.url+'/auth/v1/user',{headers:{apikey:CL.key,Au
 if(h.get('type')=='recovery')openAuth('recovery');else{toast('✅ Account confermato',2500);sync()}}catch(e){toast('⚠️ Link non valido o scaduto',4000)}});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'&&auth)sync()});
 setInterval(()=>{if(document.visibilityState=='visible'&&auth)sync()},5*6e4);
-cfgRescue().then(()=>{cloudUI();cfgState();if(auth)setTimeout(sync,300)});
+cfgRescue().then(()=>{cloudUI();cfgState();if(auth&&bio){showLock();tryUnlock()}else if(auth)setTimeout(sync,300);else if(cloudOn()&&!hadLinkToken){let skip=false;try{skip=!!localStorage.getItem('fumetteca_noacc')}catch(e){}if(!skip)setTimeout(()=>openAuth('first'),400)}});
 
 // ---- trascina giù per chiudere (fogli e mensola ingrandita): dal trattino, o da qualsiasi punto quando la pagina è in cima
 function dragClose(d,closeFn,{grabSel='.grab',after}={}){let y0=0,x0=0,dy=0,on=false,arm=false,t0=0,last=0,grab=false,dir=0;
