@@ -254,7 +254,7 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 <button class="bigb sec" id="exp">Esporta la collezione in CSV</button>
 <h2 style="font-size:19px;margin:20px 2px 4px">Siti degli editori</h2>
 <p class="cap" style="margin-top:0">Per Star Comics, Panini (Planet Manga) e J-POP la ricerca usa le uscite ufficiali (numeri, date, ISBN, copertine) dall'elenco <b>uscite.json</b> che GitHub aggiorna ogni giorno accanto a questa pagina: vale per tutte le serie di questi editori, anche quelle che aggiungi dopo. Riserva: un servizio ponte pubblico (allorigins.win, corsproxy.io, codetabs.com), spesso lento o fuori uso; vede solo quali pagine pubbliche dell'editore vengono lette.</p>
-<p class="cap" id="feedSt"></p><label class="chk"><input type="checkbox" id="pubProxy">Se l'elenco non c'è, prova il servizio ponte</label>
+<p class="cap" id="feedSt"></p><p class="cap" id="cfgSt"></p><label class="chk"><input type="checkbox" id="pubProxy">Se l'elenco non c'è, prova il servizio ponte</label>
 <label>Font Sofia Pro (Adobe Fonts): ID del progetto web<input id="kit" autocapitalize="off" autocorrect="off" placeholder="es. abc1def"></label><p class="cap" id="kitst"></p><button class="bigb sec" id="kitSave">Salva font e ricarica</button><button class="bigb sec" id="acB">Cerca le copertine mancanti (Amazon)</button><p class="cap" id="acSt"></p><button class="bigb sec" id="menuImp">Importa da file CSV</button><button class="bigb delbig" id="resetB" style="justify-content:center">Ricomincia da zero (svuota la collezione)</button><button class="bigb sec" id="menuX">Chiudi</button><div class="sheet-end"></div></dialog>
 
 <dialog id="dlg" class="sheet"><form id="frm" novalidate><div class="grab"></div><h2 id="dtitle">Volume</h2><div id="coverbox"><div id="cprev"></div><div class="cbtn"><button type="button" id="cpick">Foto dal telefono</button><button type="button" id="cfind">Cerca online</button><button type="button" id="cclr">Togli copertina</button></div></div><div id="ccap"></div><label style="margin-top:4px">Oppure incolla l'indirizzo di un'immagine<input id="curl" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://…"></label><input type="file" id="cfile" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" hidden><div id="fields"></div>
@@ -277,7 +277,7 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 <p class="cap">Uscendo, i dati vengono tolti da questo dispositivo ma restano salvati sul server.</p></div>
 <p id="auMsg" class="cap"></p><div class="sheet-end"></div></dialog>
 <div id="toast" class="glass" hidden></div>
-<script src="config.js"></script>
+<script>window.__cfg="assente"</script><script src="config.js" onload="window.__cfg=window.FUMETTECA_CONFIG?'ok':'errore'" onerror="window.__cfg='non trovato'"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{const v=document.querySelector('#ver');if(v)v.textContent=VER});
@@ -285,7 +285,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v29 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v30 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -816,7 +816,7 @@ $('#addDlg').addEventListener('close',stopScan);
 $('#addB').onclick=openAdd;$('#addDone').onclick=()=>$('#addDlg').close();
 function fontState(){let k='';try{k=localStorage.getItem('fumetteca_kit')||''}catch(e){}$('#kit').value=k;
 const m=f=>{const c=document.createElement('canvas').getContext('2d');c.font='40px '+f;return c.measureText('Fumetteca abcdefghijkl 0123').width},on=m('sofia-pro,monospace')!==m('monospace');$('#kitst').innerHTML=on?'<span class="font-ok">Sofia Pro attivo</span>':k?'<span class="font-ko">Sofia Pro non caricato</span>: controlla l\'ID e che nel progetto Adobe Fonts sia autorizzato il dominio di questa pagina ('+esc(location.hostname||'file')+'). Intanto uso Figtree.':'Sofia Pro è un font a pagamento: si usa tramite Adobe Fonts (incluso in Creative Cloud). Senza ID uso Figtree, gratuito e simile.'}
-$('#menuB').onclick=()=>{fontState();feedState();$('#pubProxy').checked=!!pubCfg.proxy;$('#menuDlg').showModal()};
+$('#menuB').onclick=()=>{fontState();feedState();cfgState();$('#pubProxy').checked=!!pubCfg.proxy;$('#menuDlg').showModal()};
 $('#pubProxy').onchange=e=>{pubCfg.proxy=e.target.checked;try{localStorage.setItem('fumetteca_pub',JSON.stringify(pubCfg))}catch(x){}};
 $('#kitSave').onclick=()=>{const k=$('#kit').value.trim().toLowerCase().replace(/^.*typekit\.net\//,'').replace(/\.css.*$/,'');if(k&&!/^[a-z0-9]{5,12}$/.test(k)){$('#kitst').textContent='⚠️ ID non valido: è il codice di 7 lettere/cifre del progetto web (es. abc1def).';return}try{k?localStorage.setItem('fumetteca_kit',k):localStorage.removeItem('fumetteca_kit')}catch(e){}location.reload()};$('#menuX').onclick=()=>$('#menuDlg').close();
 $('#menuImp').onclick=()=>{$('#menuDlg').close();openAdd();$('#file').click()};
@@ -898,6 +898,13 @@ render();toast(ok?`🗑 Serie eliminata (${gone.length} volumi)`:'⚠️ Elimina
 $('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
 // ==== Account e sincronizzazione (Supabase): ognuno ha la sua libreria privata, uguale su tutti i suoi dispositivi ====
 const CFG=window.FUMETTECA_CONFIG||{},CL={url:String(CFG.supabaseUrl||'').trim().replace(/\/+$/,''),key:String(CFG.supabaseKey||'').trim()};
+let cfgWhy='';
+async function cfgRescue(){if(CL.url&&CL.key)return;let t='';try{const r=await fetch('config.js?t='+Date.now());if(!r.ok){cfgWhy=r.status==404?'il file config.js non si trova accanto a index.html (controlla nome e cartella su GitHub)':'config.js non leggibile (HTTP '+r.status+')';return}t=await r.text()}catch(e){cfgWhy='config.js non leggibile da questa pagina';return}
+const g=k=>{const m=t.match(new RegExp(k+'\\s*:\\s*[\'"‘’“”`]\\s*([^\'"‘’“”`\\s]*)\\s*[\'"‘’“”`]'));return m?m[1].trim():''};
+const u=g('supabaseUrl'),k=g('supabaseKey');
+if(!u||!k){cfgWhy=!u&&!k?'in config.js i due valori sono vuoti':!u?'in config.js manca supabaseUrl':'in config.js manca supabaseKey';return}
+if(!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/i.test(u.replace(/\/+$/,''))){cfgWhy='supabaseUrl non sembra un indirizzo Supabase (deve finire con .supabase.co)';return}
+CL.url=u.replace(/\/+$/,'');CL.key=k;cfgWhy=window.__cfg=='errore'?'config.js aveva un errore di scrittura (es. virgolette ‘ ’): l\'ho letto lo stesso':''}
 const cloudOn=()=>!!(CL.url&&CL.key);
 let auth=null;try{auth=JSON.parse(localStorage.getItem('fumetteca_auth')||'null')}catch(e){}
 let tomb={};try{tomb=JSON.parse(localStorage.getItem('fumetteca_del')||'{}')}catch(e){}
@@ -952,6 +959,7 @@ function wipeLocal(){vols=[];tomb={};snap=new Map();for(const o of [skip,chkAt,l
 for(const c of covers.keys())idb.del(c).catch(()=>{});covers.clear();lsSet('fumetteca','[]');lsSet('fumetteca_del','{}');writeMetaLocal();render()}
 // ---- interfaccia account
 const auMsg=(m,k)=>{const e=$('#auMsg');e.textContent=m||'';e.className='cap'+(k?' '+k:'')};
+function cfgState(){const e=$('#cfgSt');if(!e)return;e.innerHTML=cloudOn()?'<span class="font-ok">Account e server attivi</span> ('+esc(CL.url.replace('https://',''))+')'+(cfgWhy?' · '+esc(cfgWhy):''):'<span class="font-ko">Account non attivi</span>: '+esc(cfgWhy||'config.js '+(window.__cfg||'assente'))}
 function cloudUI(){const b=$('#accB');if(!b)return;b.hidden=!cloudOn();if(!cloudOn())return;
 const st=!auth?'off':syncErr?'err':(syncing||pushT)?'busy':'ok';b.dataset.st=st;
 b.setAttribute('aria-label',!auth?'Accedi':'Account: '+auth.user.email);
@@ -973,14 +981,14 @@ $('#auSyncB').onclick=e=>busy(e.currentTarget,async()=>{await sync();if(syncErr)
 $('#auOut').onclick=e=>busy(e.currentTarget,async()=>{await sync().catch(()=>{});try{await api('/auth/v1/logout',{method:'POST'})}catch(x){}setAuth(null);wipeLocal();$('#authDlg').close();toast('Sei uscito: la collezione resta salvata sul server',3500)});
 $('#accB').onclick=()=>openAuth();
 // link arrivati per email (conferma account o nuova password)
-(async()=>{if(!cloudOn())return;const h=new URLSearchParams(location.hash.slice(1));
+cfgRescue().then(async()=>{if(!cloudOn())return;const h=new URLSearchParams(location.hash.slice(1));
 if(h.get('error_description')){toast('⚠️ '+h.get('error_description').replace(/\+/g,' '),5000);history.replaceState(null,'',here());return}
 const at=h.get('access_token');if(!at)return;history.replaceState(null,'',here());
 try{const u=await (await fetch(CL.url+'/auth/v1/user',{headers:{apikey:CL.key,Authorization:'Bearer '+at}})).json();setAuth({access_token:at,refresh_token:h.get('refresh_token'),expires_in:h.get('expires_in'),user:u});
-if(h.get('type')=='recovery')openAuth('recovery');else{toast('✅ Account confermato',2500);sync()}}catch(e){toast('⚠️ Link non valido o scaduto',4000)}})();
+if(h.get('type')=='recovery')openAuth('recovery');else{toast('✅ Account confermato',2500);sync()}}catch(e){toast('⚠️ Link non valido o scaduto',4000)}});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'&&auth)sync()});
 setInterval(()=>{if(document.visibilityState=='visible'&&auth)sync()},5*6e4);
-cloudUI();if(auth)setTimeout(sync,300);
+cfgRescue().then(()=>{cloudUI();cfgState();if(auth)setTimeout(sync,300)});
 
 // ---- trascina giù per chiudere (fogli e mensola ingrandita): dal trattino, o da qualsiasi punto quando la pagina è in cima
 function dragClose(d,closeFn,{grabSel='.grab',after}={}){let y0=0,x0=0,dy=0,on=false,arm=false,t0=0,last=0,grab=false,dir=0;
