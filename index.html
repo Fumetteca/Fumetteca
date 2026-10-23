@@ -194,6 +194,7 @@ dialog::backdrop{background:rgba(70,35,10,.22);-webkit-backdrop-filter:blur(5px)
 .shelf:not(.big) .sp,.shelf:not(.big) .fc{cursor:default}.shelf:not(.big) .fc img{pointer-events:none}
 .grab{position:sticky;top:6px;z-index:5;width:38px;height:5px}.grab::before{content:'';position:absolute;left:-80px;right:-80px;top:-16px;bottom:-22px}
 .sheet.dragging{animation:none!important}
+.sheet,#zoom{overscroll-behavior-y:none}#cx{display:none!important}
 #scanbox{margin-top:12px;border-radius:24px;overflow:hidden;background:#000;box-shadow:0 0 0 0 rgba(48,209,88,0);transition:box-shadow .5s}
 #scanbox #reader{margin:0;border-radius:0}#scanbox video{display:block;width:100%!important}
 #scanbox.hit{animation:hit .7s ease}@keyframes hit{0%{box-shadow:0 0 0 0 rgba(48,209,88,.9)}30%{box-shadow:0 0 0 6px rgba(48,209,88,.9)}100%{box-shadow:0 0 0 0 rgba(48,209,88,0)}}
@@ -248,7 +249,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v26 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v27 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -742,7 +743,7 @@ function openZoom(key,from){zKey=key;const z=$('#zoom');renderZoom();if(!zKey)re
 if(!still()&&from){const r=from.getBoundingClientRect();z.animate([{clipPath:clip(r)},{clipPath:'inset(0px 0px 0px 0px round 0px)'}],{duration:480,easing:EASE});
 $('#zbody').animate([{transform:`translateY(${Math.round(r.top*.35)}px) scale(.92)`,opacity:.3},{transform:'none',opacity:1}],{duration:480,easing:EASE})}
 try{if(!(history.state&&history.state.z))history.pushState({z:key},'')}catch(e){}}
-function closeZoom(){const z=$('#zoom');if(z.hidden){zKey=null;return}const k=zKey;zKey=null;document.body.classList.remove('lock');render();
+function closeZoom(){const z=$('#zoom');if(z.hidden){zKey=null;return}const k=zKey;zKey=null;document.body.classList.remove('lock');render();if(zNoAnim){zNoAnim=false;z.hidden=true;return}
 const sh=document.querySelector(`#lib .shelf[data-s="${k}"]`),done=()=>{z.hidden=true};
 if(still()||!sh)return done();sh.scrollIntoView({block:'nearest'});const r=sh.getBoundingClientRect();
 z.animate([{clipPath:'inset(0px 0px 0px 0px round 0px)',opacity:1},{clipPath:clip(r),opacity:.4}],{duration:380,easing:EASE}).onfinish=done}
@@ -859,21 +860,25 @@ vols=keep;const ok=persist();saveScov();saveMeta();$('#dsDlg').close();dsKey=nul
 if(!$('#zoom').hidden){if(history.state&&history.state.z)history.back();else closeZoom()}
 render();toast(ok?`🗑 Serie eliminata (${gone.length} volumi)`:'⚠️ Eliminata solo fino alla chiusura della pagina',ok?2600:5000)};
 $('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
-// ---- fogli: trascinando verso il basso (dal trattino, o da qualsiasi punto quando il foglio è in cima) si chiudono
-function sheetDrag(d){let y0=0,x0=0,dy=0,on=false,arm=false,t0=0,last=0,grab=false;
-const closeIt=()=>{if(d.id=='dlg'){resetDel();d.close()}else d.close()};
+// ---- trascina giù per chiudere (fogli e mensola ingrandita): dal trattino, o da qualsiasi punto quando la pagina è in cima
+function dragClose(d,closeFn,{grabSel='.grab',after}={}){let y0=0,x0=0,dy=0,on=false,arm=false,t0=0,last=0,grab=false,dir=0;
 d.addEventListener('touchstart',e=>{if(e.touches.length!=1){arm=false;return}const t=e.target;
-if(t.closest('input,textarea,select,.scvs,#reader'))return;grab=!!t.closest('.grab');if(d.scrollTop>2&&!grab)return;
-y0=e.touches[0].clientY;x0=e.touches[0].clientX;dy=0;arm=true;on=false;t0=Date.now()},{passive:true});
+if(t.closest('input,textarea,select,.scvs,#reader'))return;grab=!!t.closest(grabSel);if(d.scrollTop>2&&!grab)return;
+y0=e.touches[0].clientY;x0=e.touches[0].clientX;dy=0;arm=true;on=false;dir=0;t0=Date.now()},{passive:true});
 d.addEventListener('touchmove',e=>{if(!arm)return;const y=e.touches[0].clientY-y0,x=e.touches[0].clientX-x0;
-if(!on){if(y>8&&y>Math.abs(x)*1.2&&(grab||d.scrollTop<=2)){on=true;d.classList.add('dragging');d.style.transition='none';y0+=8}else{if(y<-4||Math.abs(x)>12)arm=false;return}}
-dy=Math.max(0,e.touches[0].clientY-y0);d.style.transform=`translateY(${dy}px)`;e.preventDefault()},{passive:false});
+if(!dir){if(Math.abs(y)<3&&Math.abs(x)<3)return;dir=y>0&&y>=Math.abs(x)&&(grab||d.scrollTop<=0)?1:-1;if(dir<0){arm=false;return}}
+e.preventDefault();
+if(!on&&y>6){on=true;d.classList.add('dragging');d.style.transition='none'}
+if(on){dy=Math.max(0,y-6);d.style.transform=`translateY(${dy}px)`}},{passive:false});
 const end=()=>{if(!arm)return;arm=false;if(!on)return;on=false;last=Date.now();const v=dy/Math.max(1,Date.now()-t0);
-if(dy>110||(v>.7&&dy>40)){d.style.transition='transform .22s ease-in';d.style.transform='translateY(110%)';setTimeout(()=>{closeIt();d.style.transition='';d.style.transform=''},220)}
+if(dy>110||(v>.7&&dy>40)){d.style.transition='transform .24s ease-in';d.style.transform='translateY(105%)';setTimeout(()=>{closeFn();setTimeout(()=>{d.style.transition='';d.style.transform='';after&&after()},30)},240)}
 else{d.style.transition='transform .4s cubic-bezier(.2,1.25,.3,1)';d.style.transform='';setTimeout(()=>{d.style.transition=''},420)}};
-d.addEventListener('close',()=>d.classList.remove('dragging'));
 d.addEventListener('touchend',end);d.addEventListener('touchcancel',end);
 d.addEventListener('click',e=>{if(Date.now()-last<400){e.stopPropagation();e.preventDefault()}},true)}
+const sheetDrag=d=>{dragClose(d,()=>{if(d.id=='dlg')resetDel();d.close()});d.addEventListener('close',()=>d.classList.remove('dragging'))};
+// mensola ingrandita: tirando giù dalla cima si torna alla collezione
+let zNoAnim=false;
+dragClose($('#zoom'),()=>{zNoAnim=true;if(history.state&&history.state.z)history.back();else closeZoom()},{grabSel:'.znav',after:()=>$('#zoom').classList.remove('dragging')});
 document.querySelectorAll('dialog.sheet').forEach(sheetDrag);
 render();$('#warn').hidden=probe();setTimeout(async()=>{autoCovers();await check('auto')},1500);
 idb.all().then(o=>{for(const[k,v]of Object.entries(o)){try{if(typeof v=='string'&&v.startsWith('data:image/'))covers.set(k,v)}catch(e){}}render()}).catch(()=>{});
