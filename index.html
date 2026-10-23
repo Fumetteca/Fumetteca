@@ -199,6 +199,31 @@ dialog::backdrop{background:rgba(70,35,10,.22);-webkit-backdrop-filter:blur(5px)
 #scanbox #reader{margin:0;border-radius:0}#scanbox video{display:block;width:100%!important}
 #scanbox.hit{animation:hit .7s ease}@keyframes hit{0%{box-shadow:0 0 0 0 rgba(48,209,88,.9)}30%{box-shadow:0 0 0 6px rgba(48,209,88,.9)}100%{box-shadow:0 0 0 0 rgba(48,209,88,0)}}
 #scanSt{margin:0;padding:10px 14px;background:var(--sheet);font-size:14px;color:var(--mu);min-height:1em}#scanSt.ok{color:var(--ok);font-weight:650}#scanSt.dup{color:var(--org);font-weight:600}#scanSt.err{color:var(--red);font-weight:600}
+/* ===== Geometria concentrica: i raggi derivano dall'angolo dello schermo (--R) meno i margini ===== */
+:root{--R:min(56px,calc(14px + env(safe-area-inset-bottom,0px)));--m:8px;--Rs:calc(var(--R) - var(--m));--rc:max(26px,calc(var(--R) - 12px));--rk:max(20px,calc(var(--R) - 16px));--W:820px}
+/* colonna centrale: su iPad/computer resta leggibile e centrata */
+main,#zbody{max-width:var(--W);margin-left:auto;margin-right:auto}
+.top>*,.znav{max-width:var(--W);margin-left:auto;margin-right:auto}
+.top{border-radius:0 0 var(--rk) var(--rk)}.znav{border-radius:0 0 var(--rk) var(--rk)}
+h1{font-size:clamp(28px,8vw,36px)}.zh h2{font-size:clamp(26px,7.5vw,38px)}
+/* mensola a schermo intero: angoli in alto come quelli dello schermo (si vedono quando la trascini) */
+#zoom{border-radius:var(--R) var(--R) 0 0;box-shadow:0 -10px 40px rgba(60,30,10,.18);background:var(--bg)}
+#zoom.dragging{border-radius:var(--R)}
+/* libreria: telaio, ripiano e bordo concentrici */
+.case{border-radius:var(--rc);padding:10px 10px 1px}.cell{border-radius:calc(var(--rc) - 10px) calc(var(--rc) - 10px) 6px 6px}.edge{border-radius:6px 6px calc(var(--rc) - 10px) calc(var(--rc) - 10px)}
+.tag{border-radius:999px}.dels{border-radius:50%}
+/* schede e riquadri: stesso raggio, rientrati di 16px dallo schermo */
+.card,.stat{border-radius:var(--rk)}.ainote{border-radius:calc(var(--rk) - 8px)}#warn{border-radius:var(--rk)}
+input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
+/* fogli: sospesi a 8px dai bordi, angoli = angolo dello schermo − 8px; contenuto interno concentrico */
+.sheet{width:calc(100% - 2 * var(--m));max-width:640px;margin:auto auto var(--m);border-radius:var(--Rs);max-height:calc(100dvh - var(--m) - env(safe-area-inset-top,0px) - 12px)}
+.sheet .bt{margin:16px -18px 0;padding:12px 18px max(14px,calc(env(safe-area-inset-bottom,0px) - 6px));border-radius:0 0 var(--Rs) var(--Rs)}
+.sheet-end{height:max(14px,calc(env(safe-area-inset-bottom,0px) - 6px))}
+#cprev,#scprev{border-radius:5px max(9px,calc(var(--Rs) - 26px)) max(9px,calc(var(--Rs) - 26px)) 5px}
+#scanbox{border-radius:max(16px,calc(var(--Rs) - 18px))}
+@media(min-width:700px){.sheet{margin:auto;max-height:88vh;border-radius:32px}.sheet .bt{border-radius:0 0 32px 32px}}
+@media(min-width:900px){#zoom{border-radius:0}}
+#applyrow[hidden],[hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="bgfx"></div>
@@ -249,7 +274,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v27 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v28 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
