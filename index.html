@@ -224,11 +224,14 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 @media(min-width:700px){.sheet{margin:auto;max-height:88vh;border-radius:32px}.sheet .bt{border-radius:0 0 32px 32px}}
 @media(min-width:900px){#zoom{border-radius:0}}
 #applyrow[hidden],[hidden]{display:none!important}
+#accB{position:relative}#accB .dot{position:absolute;right:6px;top:6px;width:10px;height:10px;border-radius:50%;background:#9a9aa2;border:2px solid var(--bg)}
+#accB[data-st=ok] .dot{background:var(--ok)}#accB[data-st=busy] .dot{background:var(--org)}#accB[data-st=err] .dot{background:var(--red)}
+#auMsg.font-ok{color:var(--ok)}#auMsg.font-ko{color:var(--red)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="bgfx"></div>
 <header class="top glass-bar">
-<div class="tl"><h1>Fumetteca <small id="ver"></small></h1><div class="tb"><button class="circ" id="menuB" aria-label="Altro"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button><button class="circ pri" id="addB" aria-label="Aggiungi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+<div class="tl"><h1>Fumetteca <small id="ver"></small></h1><div class="tb"><button class="circ" id="accB" hidden aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.4-3.3 4-5 7-5s5.6 1.7 7 5"/></svg><i class="dot"></i></button><button class="circ" id="menuB" aria-label="Altro"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button><button class="circ pri" id="addB" aria-label="Aggiungi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
 <div class="seg glass" id="seg" data-on="lib"><i class="ind"></i><button data-tab="lib" class="on">Collezione</button><button data-tab="new">Nuove uscite<span id="c2" class="badge"></span></button></div>
 </header>
 <div id="warn" hidden>⚠️ Il browser non permette di salvare i dati in modo permanente: quello che aggiungi o modifichi si perde quando chiudi la pagina. Apri l'indirizzo direttamente in Safari (non dentro un'altra app), esci dalla navigazione privata e controlla che non sia attivo «Blocca tutti i cookie». Intanto usa «Esporta CSV» per non perdere nulla.</div>
@@ -266,7 +269,15 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 <div class="bt"><div id="scMsg" hidden></div><button type="button" id="scSave" class="pri" style="flex:1">Salva</button><button type="button" id="scCx">Annulla</button></div></dialog>
 <dialog id="dsDlg" class="sheet"><div class="grab"></div><h2 id="dsTitle">Eliminare la serie?</h2><p id="dsInfo"></p>
 <button class="bigb danger" id="dsOk">Elimina la serie</button><button class="bigb sec" id="dsCx">Annulla</button><div class="sheet-end"></div></dialog>
+<dialog id="authDlg" class="sheet"><div class="grab"></div><h2 id="auTitle">Account</h2><p class="hint" id="auHint" style="margin:-6px 2px 10px"></p>
+<div id="auForm"><label>Email<input id="auEmail" type="email" autocomplete="email" autocapitalize="off" autocorrect="off" inputmode="email"></label><label>Password<input id="auPw" type="password" autocomplete="current-password"></label>
+<button class="bigb pri" id="auIn" style="margin-top:16px">Accedi</button><button class="bigb sec" id="auUp">Crea un nuovo account</button><button class="link" id="auForgot" style="display:block;margin:12px auto 0">Password dimenticata?</button></div>
+<div id="auNew" hidden><label>Nuova password<input id="auPw2" type="password" autocomplete="new-password"></label><button class="bigb pri" id="auSetPw" style="margin-top:16px">Salva la nuova password</button></div>
+<div id="auLogged" hidden><p id="auWho" style="margin:4px 2px"></p><p class="cap" id="auSync"></p><button class="bigb pri" id="auSyncB">Sincronizza ora</button><button class="bigb delbig" id="auOut" style="justify-content:center">Esci da questo dispositivo</button>
+<p class="cap">Uscendo, i dati vengono tolti da questo dispositivo ma restano salvati sul server.</p></div>
+<p id="auMsg" class="cap"></p><div class="sheet-end"></div></dialog>
 <div id="toast" class="glass" hidden></div>
+<script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{const v=document.querySelector('#ver');if(v)v.textContent=VER});
@@ -274,7 +285,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v28 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v29 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -458,7 +469,7 @@ for(const a of d.querySelectorAll('a[href*="/titoli-fumetti/"]')){const t=tok(a.
 if(!best)return{ok:false,msg:'collana non trovata nel catalogo Star Comics'};slug=best.getAttribute('href').split('/titoli-fumetti/')[1].split(/[?#/]/)[0].toLowerCase();
 lst=scList((await getPage(`${SC}/titoli-fumetti/${slug}`)).html,slug)}
 if(!lst.items.length)return{ok:false,msg:'nessun volume letto dalla pagina della collana'};
-pubSlug[s.key]=slug;try{localStorage.setItem('fumetteca_pubslug',JSON.stringify(pubSlug))}catch(e){}
+pubSlug[s.key]=slug;try{localStorage.setItem('fumetteca_pubslug',JSON.stringify(pubSlug));metaTouch()}catch(e){}
 let items=lst.items;const need=Math.min(s.top+1,...s.gaps);
 for(let p=2;p<=Math.min(lst.last,10)&&Math.min(...items.map(x=>x.number))>need;p++){try{items=items.concat(scList((await getPage(`${SC}/titoli-fumetti/${slug}?pagina=${p}`)).html,slug).items)}catch(e){break}}
 return{ok:true,slug,items,via}}
@@ -532,7 +543,7 @@ finally{checking=false}}
 
 // ---- Modifica (nessun alert/confirm: alcuni browser li bloccano e i pulsanti sembrano morti)
 const note=(m,k)=>{const e=$('#msg');e.textContent=m;e.className=k||'';e.hidden=!m};
-function persist(){try{const j=JSON.stringify(vols);localStorage.setItem('fumetteca',j);if(localStorage.getItem('fumetteca')!==j)throw Error('verifica fallita');$('#warn').hidden=true;return true}
+function persist(){try{if(typeof cloudTrack=='function')cloudTrack();const j=JSON.stringify(vols);localStorage.setItem('fumetteca',j);if(localStorage.getItem('fumetteca')!==j)throw Error('verifica fallita');$('#warn').hidden=true;return true}
 catch(e){$('#warn').hidden=false;return false}}
 function probe(){try{localStorage.setItem('fumetteca_probe','1');const ok=localStorage.getItem('fumetteca_probe')==='1';localStorage.removeItem('fumetteca_probe');return ok}catch(e){return false}}
 let delTimer=null;
@@ -653,7 +664,7 @@ if(!isNew){if(!o.isbn)o.isbn=cur.isbn;if(o.isbn!==cur.isbn&&vols.some(v=>v!==cur
 else{if(!o.isbn)o.isbn='man-'+Date.now();if(vols.some(v=>v.isbn==o.isbn))return note('⚠️ Questo ISBN è già in elenco','err')}
 const old=cur.series;
 if(!isNew&&old&&o.series!==old){const oth=vols.filter(v=>v!==cur&&v.series==old),apply=oth.length&&!$('#applyrow').hidden&&d.get('applyall');
-if(!oth.length||apply){smap[n(old)]=o.series;try{localStorage.setItem('fumetteca_smap',JSON.stringify(smap))}catch(x){}if(scov[n(old)]&&!scov[n(o.series)]){scov[n(o.series)]=scov[n(old)];delete scov[n(old)];saveScov()}}
+if(!oth.length||apply){smap[n(old)]=o.series;try{localStorage.setItem('fumetteca_smap',JSON.stringify(smap));metaTouch()}catch(x){}if(scov[n(old)]&&!scov[n(o.series)]){scov[n(o.series)]=scov[n(old)];delete scov[n(old)];saveScov()}}
 if(apply)oth.forEach(v=>v.series=o.series)}
 let cid='',idbFail=false;
 if(coverPhoto){cid='idb:'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);covers.set(cid,coverPhoto);try{await idb.put(cid,coverPhoto)}catch(e){idbFail=true}}
@@ -678,7 +689,7 @@ $('#del').onclick=doDelete;
 // ==== Serie, mancanti, nuove uscite
 let skip={},chkAt={};try{skip=JSON.parse(localStorage.getItem('fumetteca_skip')||'{}');chkAt=JSON.parse(localStorage.getItem('fumetteca_chk')||'{}')}catch(e){}
 let lastOut={};try{lastOut=JSON.parse(localStorage.getItem('fumetteca_last')||'{}')}catch(e){}
-const saveMeta=()=>{try{localStorage.setItem('fumetteca_last',JSON.stringify(lastOut));localStorage.setItem('fumetteca_skip',JSON.stringify(skip));localStorage.setItem('fumetteca_chk',JSON.stringify(chkAt))}catch(e){}};
+const saveMeta=()=>{if(typeof metaTouch=='function')metaTouch();try{localStorage.setItem('fumetteca_last',JSON.stringify(lastOut));localStorage.setItem('fumetteca_skip',JSON.stringify(skip));localStorage.setItem('fumetteca_chk',JSON.stringify(chkAt))}catch(e){}};
 const mode=a=>{const c={};a.filter(Boolean).forEach(x=>c[x]=(c[x]||0)+1);return Object.keys(c).sort((x,y)=>c[y]-c[x])[0]||''};
 const pad2=x=>String(x).padStart(2,'0'),today=()=>{const d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())};
 const isoD=d=>{d=String(d||'').trim();let m=d.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?/);if(m)return m[1]+'-'+pad2(m[2])+(m[3]?'-'+pad2(m[3]):'');m=d.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);if(m)return m[3]+'-'+pad2(m[2])+'-'+pad2(m[1]);m=d.match(/^(\d{4})$/);return m?m[1]:''};
@@ -712,7 +723,7 @@ return L.find(s=>s.key==k)||L.slice().sort((a,b)=>Math.max(...b.own.map(v=>v.add
 // ---- pezzi grafici
 const ini=s=>esc(String(s||'').slice(0,40));
 let scov={};try{scov=JSON.parse(localStorage.getItem('fumetteca_scov')||'{}')}catch(e){}
-const saveScov=()=>{try{localStorage.setItem('fumetteca_scov',JSON.stringify(scov));return true}catch(e){return false}};
+const saveScov=()=>{if(typeof metaTouch=='function')metaTouch();try{localStorage.setItem('fumetteca_scov',JSON.stringify(scov));return true}catch(e){return false}};
 // copertina della serie: quella scelta, altrimenti la copertina del primo volume che ne ha una
 const scSrc=s=>{const c=scov[s.key];if(c)return c.startsWith('idb:')?covers.get(c)||'':c;const v=s.own.find(v=>coverSrc(v));return v?coverSrc(v):''};
 function front(s,big){const src=scSrc(s);return `<div class="fc" style="--h:${s.h}" ${big?`data-sc="${s.key}"`:''}><i>${esc(s.name)}</i>${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('bad');this.remove()">`:''}${big?'<span class="edit">Cambia</span>':''}</div>`}
@@ -885,6 +896,92 @@ vols=keep;const ok=persist();saveScov();saveMeta();$('#dsDlg').close();dsKey=nul
 if(!$('#zoom').hidden){if(history.state&&history.state.z)history.back();else closeZoom()}
 render();toast(ok?`🗑 Serie eliminata (${gone.length} volumi)`:'⚠️ Eliminata solo fino alla chiusura della pagina',ok?2600:5000)};
 $('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
+// ==== Account e sincronizzazione (Supabase): ognuno ha la sua libreria privata, uguale su tutti i suoi dispositivi ====
+const CFG=window.FUMETTECA_CONFIG||{},CL={url:String(CFG.supabaseUrl||'').trim().replace(/\/+$/,''),key:String(CFG.supabaseKey||'').trim()};
+const cloudOn=()=>!!(CL.url&&CL.key);
+let auth=null;try{auth=JSON.parse(localStorage.getItem('fumetteca_auth')||'null')}catch(e){}
+let tomb={};try{tomb=JSON.parse(localStorage.getItem('fumetteca_del')||'{}')}catch(e){}
+let metaAt=0;try{metaAt=+(localStorage.getItem('fumetteca_metaAt')||0)||0}catch(e){}
+let syncAt=0,syncErr='',pushT=null,syncing=false,syncAgain=false;
+const volSig=v=>{const{mt,...r}=v;return JSON.stringify(r)};
+let snap=new Map(vols.map(v=>[v.isbn,volSig(v)]));
+const lsSet=(k,v)=>{try{localStorage.setItem(k,typeof v=='string'?v:JSON.stringify(v))}catch(e){}};
+// ogni volume cambiato prende l'ora della modifica; quelli tolti lasciano una "lapide" (così l'eliminazione arriva anche sugli altri dispositivi)
+function cloudTrack(noPush){const now=Date.now(),seen=new Set();let ch=false;
+for(const v of vols){seen.add(v.isbn);const sg=volSig(v);if(snap.get(v.isbn)!==sg){v.mt=now;snap.set(v.isbn,sg);ch=true}}
+for(const k of [...snap.keys()])if(!seen.has(k)){tomb[k]=now;snap.delete(k);ch=true}
+for(const[k,t]of Object.entries(tomb))if(now-t>180*864e5)delete tomb[k];
+if(ch){lsSet('fumetteca',vols);lsSet('fumetteca_del',tomb)}if(ch&&!noPush)schedPush()}
+function metaTouch(){metaAt=Date.now();lsSet('fumetteca_metaAt',String(metaAt));schedPush()}
+function writeMetaLocal(){lsSet('fumetteca_skip',skip);lsSet('fumetteca_chk',chkAt);lsSet('fumetteca_last',lastOut);lsSet('fumetteca_scov',scov);lsSet('fumetteca_smap',smap);lsSet('fumetteca_pubslug',pubSlug);lsSet('fumetteca_metaAt',String(metaAt))}
+function schedPush(){if(!cloudOn()||!auth)return;clearTimeout(pushT);cloudUI();pushT=setTimeout(sync,1500)}
+const IT={'Invalid login credentials':'Email o password sbagliate.','Email not confirmed':'Devi prima confermare l\'email: apri il link che ti abbiamo mandato.','User already registered':'Esiste già un account con questa email: usa «Accedi».','Signup requires a valid password':'Scrivi una password.','Unable to validate email address: invalid format':'L\'indirizzo email non è valido.'};
+const itMsg=m=>IT[m]||(/at least (\d+) characters/i.test(m)?'La password deve avere almeno '+m.match(/(\d+) characters/)[1]+' caratteri.':/rate limit|too many/i.test(m)?'Troppe richieste: riprova tra qualche minuto.':/fetch|network|load failed/i.test(m)?'Server non raggiungibile: controlla la connessione.':m);
+async function api(path,{method='GET',body,headers={},raw=false,useAuth=true,retry=true}={}){
+if(useAuth&&auth&&auth.expires_at*1000<Date.now()+60000)await refreshAuth();
+const h={apikey:CL.key,...(useAuth&&auth?{Authorization:'Bearer '+auth.access_token}:{}),...headers};if(body!==undefined&&!raw)h['content-type']='application/json';
+let r;try{r=await fetch(CL.url+path,{method,headers:h,body:raw?body:body!==undefined?JSON.stringify(body):undefined})}catch(e){throw Error('Server non raggiungibile: controlla la connessione.')}
+const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+if(r.status==401&&useAuth&&auth&&retry){await refreshAuth();return api(path,{method,body,headers,raw,useAuth,retry:false})}
+if(!r.ok){const e=Error(itMsg((j&&(j.msg||j.error_description||j.message||j.error))||('HTTP '+r.status)));e.status=r.status;throw e}return j}
+function setAuth(j){auth=j?{access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(+j.expires_in||3600),user:{id:j.user.id,email:j.user.email}}:null;
+try{auth?localStorage.setItem('fumetteca_auth',JSON.stringify(auth)):localStorage.removeItem('fumetteca_auth')}catch(e){}cloudUI()}
+async function refreshAuth(){let r,d;try{r=await fetch(CL.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:CL.key,'content-type':'application/json'},body:JSON.stringify({refresh_token:auth.refresh_token})});d=await r.json().catch(()=>({}))}catch(e){throw Error('Server non raggiungibile: controlla la connessione.')}
+if(!r.ok){setAuth(null);toast('Sessione scaduta: accedi di nuovo',4000);throw Error('Sessione scaduta: accedi di nuovo.')}setAuth({...d,user:d.user||auth.user})}
+const dataToBlob=d=>{const m=/^data:([^;,]+);base64,(.*)$/.exec(d);const b=atob(m[2]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new Blob([u],{type:m[1]})};
+// le foto salvate sul telefono vanno sul server, così si vedono su tutti i dispositivi
+async function uploadCovers(){const list=[...vols.filter(v=>String(v.cover||'').startsWith('idb:')).map(v=>[v,'cover']),...Object.keys(scov).filter(k=>String(scov[k]).startsWith('idb:')).map(k=>[scov,k])];let up=0,meta=false;
+for(const[o,f]of list){const cid=o[f],d=covers.get(cid);if(!d)continue;try{const path=`${auth.user.id}/${cid.slice(4)}.jpg`;
+await api(`/storage/v1/object/covers/${path}`,{method:'POST',raw:true,body:dataToBlob(d),headers:{'content-type':'image/jpeg','x-upsert':'true','cache-control':'31536000'}});
+const url=`${CL.url}/storage/v1/object/public/covers/${path}`;for(const v of vols)if(v.cover===cid)v.cover=url;for(const k of Object.keys(scov))if(scov[k]===cid){scov[k]=url;meta=true}covers.delete(cid);idb.del(cid).catch(()=>{});up++}catch(e){}}
+if(up){cloudTrack(true);if(meta){metaAt=Date.now();writeMetaLocal()}render()}}
+function mergeRemote(r){const m=new Map(vols.map(v=>[v.isbn,v]));let ch=false;
+for(const[k,t]of Object.entries(r.del||{}))if(!(tomb[k]>=t))tomb[k]=t;
+for(const rv of r.vols||[]){const lv=m.get(rv.isbn);if(!lv||(rv.mt||0)>(lv.mt||0)){m.set(rv.isbn,rv);ch=true}}
+for(const[k,t]of Object.entries(tomb)){const v=m.get(k);if(v&&(v.mt||0)<=t){m.delete(k);ch=true}}
+vols=[...m.values()];
+if(r.meta&&(r.metaAt||0)>metaAt){for(const[name,obj]of [['skip',skip],['chkAt',chkAt],['lastOut',lastOut],['scov',scov],['smap',smap],['pubSlug',pubSlug]]){for(const k of Object.keys(obj))delete obj[k];Object.assign(obj,r.meta[name]||{})}metaAt=r.metaAt;writeMetaLocal();ch=true}
+snap=new Map(vols.map(v=>[v.isbn,volSig(v)]));lsSet('fumetteca',vols);lsSet('fumetteca_del',tomb);if(ch)render()}
+async function sync(){if(!cloudOn()||!auth)return;if(syncing){syncAgain=true;return}syncing=true;clearTimeout(pushT);pushT=null;cloudUI();
+try{await uploadCovers();
+const rows=await api(`/rest/v1/libraries?select=data,updated_at&user_id=eq.${auth.user.id}`);if(rows&&rows[0]&&rows[0].data)mergeRemote(rows[0].data);
+await api('/rest/v1/libraries',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:[{user_id:auth.user.id,data:{v:2,vols,del:tomb,meta:{skip,chkAt,lastOut,scov,smap,pubSlug},metaAt},updated_at:new Date().toISOString()}]});
+syncAt=Date.now();syncErr=''}
+catch(e){syncErr=e.message}finally{syncing=false;cloudUI();if(syncAgain){syncAgain=false;schedPush()}}}
+function wipeLocal(){vols=[];tomb={};snap=new Map();for(const o of [skip,chkAt,lastOut,scov,smap,pubSlug])for(const k of Object.keys(o))delete o[k];metaAt=0;
+for(const c of covers.keys())idb.del(c).catch(()=>{});covers.clear();lsSet('fumetteca','[]');lsSet('fumetteca_del','{}');writeMetaLocal();render()}
+// ---- interfaccia account
+const auMsg=(m,k)=>{const e=$('#auMsg');e.textContent=m||'';e.className='cap'+(k?' '+k:'')};
+function cloudUI(){const b=$('#accB');if(!b)return;b.hidden=!cloudOn();if(!cloudOn())return;
+const st=!auth?'off':syncErr?'err':(syncing||pushT)?'busy':'ok';b.dataset.st=st;
+b.setAttribute('aria-label',!auth?'Accedi':'Account: '+auth.user.email);
+const d=$('#authDlg');if(!d)return;$('#auForm').hidden=!!auth||!$('#auNew').hidden;$('#auLogged').hidden=!auth;
+if(auth){$('#auWho').innerHTML='Connesso come <b>'+esc(auth.user.email)+'</b>';$('#auSync').textContent=syncErr?'⚠️ Ultima sincronizzazione non riuscita: '+syncErr:syncing?'⏳ Sincronizzo…':syncAt?'✅ Sincronizzato '+new Date(syncAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+' · '+vols.filter(v=>v.state=='owned').length+' volumi':'In attesa di sincronizzazione'}}
+function openAuth(mode){const d=$('#authDlg');$('#auNew').hidden=mode!='recovery';auMsg('');
+$('#auTitle').textContent=mode=='recovery'?'Nuova password':auth?'Il tuo account':'Accedi o crea un account';
+$('#auHint').textContent=auth?'La tua collezione è salvata sul server: la ritrovi su ogni dispositivo in cui accedi.':mode=='recovery'?'Scegli la nuova password per il tuo account.':'Con un account la tua collezione è salvata sul server e la ritrovi su telefono, PC e tablet. I volumi già presenti su questo dispositivo vengono uniti al tuo account.';
+cloudUI();if(!d.open)d.showModal()}
+async function busy(btn,fn){const t=btn.textContent;btn.disabled=true;btn.textContent='…';try{await fn()}catch(e){auMsg('⚠️ '+e.message,'font-ko')}finally{btn.disabled=false;btn.textContent=t}}
+const creds=()=>{const e=$('#auEmail').value.trim(),p=$('#auPw').value;if(!/^\S+@\S+\.\S+$/.test(e))throw Error('Scrivi un indirizzo email valido.');if(p.length<6)throw Error('La password deve avere almeno 6 caratteri.');return[e,p]};
+const here=()=>location.href.split('#')[0];
+$('#auIn').onclick=e=>busy(e.currentTarget,async()=>{const[em,pw]=creds();setAuth(await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email:em,password:pw},useAuth:false}));$('#auPw').value='';auMsg('✅ Accesso effettuato: unisco e sincronizzo la tua collezione…','font-ok');await sync();openAuth();toast('✅ Collezione sincronizzata',2500)});
+$('#auUp').onclick=e=>busy(e.currentTarget,async()=>{const[em,pw]=creds();const j=await api('/auth/v1/signup?redirect_to='+encodeURIComponent(here()),{method:'POST',body:{email:em,password:pw},useAuth:false});
+if(j&&j.access_token){setAuth(j);$('#auPw').value='';await sync();openAuth();auMsg('✅ Account creato: la tua collezione è salvata sul server.','font-ok')}else auMsg('📧 Ti abbiamo mandato un\'email: apri il link per confermare l\'account, poi torna qui e tocca «Accedi».','font-ok')});
+$('#auForgot').onclick=e=>busy(e.currentTarget,async()=>{const em=$('#auEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(em))throw Error('Scrivi prima la tua email qui sopra.');await api('/auth/v1/recover?redirect_to='+encodeURIComponent(here()),{method:'POST',body:{email:em},useAuth:false});auMsg('📧 Se l\'email è registrata, riceverai un link per scegliere una nuova password.','font-ok')});
+$('#auSetPw').onclick=e=>busy(e.currentTarget,async()=>{const p=$('#auPw2').value;if(p.length<6)throw Error('La password deve avere almeno 6 caratteri.');await api('/auth/v1/user',{method:'PUT',body:{password:p}});$('#auPw2').value='';$('#auNew').hidden=true;auMsg('✅ Password cambiata.','font-ok');openAuth();sync()});
+$('#auSyncB').onclick=e=>busy(e.currentTarget,async()=>{await sync();if(syncErr)throw Error(syncErr);auMsg('✅ Sincronizzato','font-ok')});
+$('#auOut').onclick=e=>busy(e.currentTarget,async()=>{await sync().catch(()=>{});try{await api('/auth/v1/logout',{method:'POST'})}catch(x){}setAuth(null);wipeLocal();$('#authDlg').close();toast('Sei uscito: la collezione resta salvata sul server',3500)});
+$('#accB').onclick=()=>openAuth();
+// link arrivati per email (conferma account o nuova password)
+(async()=>{if(!cloudOn())return;const h=new URLSearchParams(location.hash.slice(1));
+if(h.get('error_description')){toast('⚠️ '+h.get('error_description').replace(/\+/g,' '),5000);history.replaceState(null,'',here());return}
+const at=h.get('access_token');if(!at)return;history.replaceState(null,'',here());
+try{const u=await (await fetch(CL.url+'/auth/v1/user',{headers:{apikey:CL.key,Authorization:'Bearer '+at}})).json();setAuth({access_token:at,refresh_token:h.get('refresh_token'),expires_in:h.get('expires_in'),user:u});
+if(h.get('type')=='recovery')openAuth('recovery');else{toast('✅ Account confermato',2500);sync()}}catch(e){toast('⚠️ Link non valido o scaduto',4000)}})();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'&&auth)sync()});
+setInterval(()=>{if(document.visibilityState=='visible'&&auth)sync()},5*6e4);
+cloudUI();if(auth)setTimeout(sync,300);
+
 // ---- trascina giù per chiudere (fogli e mensola ingrandita): dal trattino, o da qualsiasi punto quando la pagina è in cima
 function dragClose(d,closeFn,{grabSel='.grab',after}={}){let y0=0,x0=0,dy=0,on=false,arm=false,t0=0,last=0,grab=false,dir=0;
 d.addEventListener('touchstart',e=>{if(e.touches.length!=1){arm=false;return}const t=e.target;
