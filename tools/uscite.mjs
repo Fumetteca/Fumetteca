@@ -30,7 +30,7 @@ const SRC = [
   { k: 'magic', name: 'Magic Press', site: 'https://b2c.magicpressedizioni.it', type: 'html', list: ['/43-manga?page={n}', '/12-801-yaoi?page={n}', '/13-mx?page={n}', '/55-edizioni-limitate?page={n}'], preList: ['/module/preorder/allpreorderdetails'], prod: /^\/(?:[a-z0-9-]+\/)?\d+-[a-z0-9-]+\.html$/, maxPages: 150 },
   { k: 'nipponshock', name: 'Nippon Shock Edizioni', site: 'https://www.nipponshock.com', type: 'html', list: ['/shop/manga'], prod: /^\/shop\/[a-z0-9-]+$/ },
   { k: 'dokusho', name: 'Dokusho Edizioni', site: 'https://dokusho.it', type: 'woo', list: ['/index.php/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
-  { k: 'dynit', name: 'Dynit', site: 'https://www.dynit.it', type: 'woo', cat: /manga/i, brand: /dynit/i, list: ['/prodotti/manga/page/{n}/'], prod: /\/prodott[oi]\/[^/]+\/?$/ },
+  { k: 'dynit', name: 'Dynit', site: 'https://www.dynit.it', type: 'woo', cat: /manga/i, brand: /dynit/i, resell: true, author: true, list: ['/prodotti/manga/page/{n}/'], prod: /\/prodott[oi]\/[^/]+\/?$/ },
   { k: 'hikari', name: 'Hikari Edizioni', site: 'https://hikariedizioni.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
   { k: 'e001', name: '001 Edizioni', site: 'https://www.001edizioni.com', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/ },
   { k: 'ishi', name: 'Ishi Publishing', site: 'https://ishipublishing.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/ },
@@ -105,7 +105,14 @@ const isbnPage = (h, t) => { const m = String(h).match(/["'](?:gtin13|gtin|isbn|
   const i = m ? m[1].replace(/[^\d]/g, '') : ''; return ok13(i) ? i : isbnIn(t); };
 const goodImg = u => u && !/placeholder|logo|default[-_]image|no[-_]?image/i.test(u) ? u : '';
 // prodotti che non sono libri (Dynit, Tunué… vendono anche DVD, Blu-ray, magliette, gadget)
-const NOTBOOK = /\beps?\.?\s*\d|\bepisodi\b|\b(?:dvd|blu-?ray|bluray|4k|uhd|steelbook|cd audio|vinile|t-?shirt|maglietta|felpa|poster|tazza|peluche|action figure|gadget|portachiavi|spilla|shopper)\b/i;
+const NOTBOOK = /\beps?\.?\s*\d|\bepisodi\b|\b(?:dvd|blu-?ray|bluray|4k|uhd|steelbook|cd audio|vinile|t-?shirt|maglietta|felpa|poster|tazza|peluche|action figure|gadget|portachiavi|spilla|shopper|calendario|agenda)\b/i;
+// "Marca" nei negozi che rivendono (Dynit) → editore della Fumetteca; gli editori non letti direttamente diventano x-<nome>
+const MARCA = [['panini', /panini|planet manga|marvel italia/i], ['star', /star comics|edizioni star/i], ['jpop', /j-?pop/i], ['bd', /edizioni bd|\bbd edizioni/i], ['magic', /magic ?press/i],
+  ['dokusho', /dokusho/i], ['musubi', /musubi/i], ['hikari', /hikari/i], ['e001', /\b001\b/], ['goen', /\bgoen\b|\brw[- ]?(?:edizioni|lion|goen)\b/i], ['bao', /\bbao\b/i], ['coconino', /coconino/i],
+  ['tunue', /tunu[eé]/i], ['bonelli', /bonelli/i], ['cosmo', /(?:editoriale|edizioni) cosmo|cosmo editoriale/i], ['npe', /\bnpe\b|nicola pesce/i], ['hollow', /hollow ?press/i], ['nipponshock', /nippon ?shock/i],
+  ['ishi', /\bishi\b/i], ['toshokan', /toshokan/i], ['dynit', /dynit/i]];
+const marcaKey = m => (MARCA.find(([k, r]) => r.test(m)) || [])[0] || 'x-' + String(m).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const resold = [], marcaName = {};
 const PRE = /pre-?ordin|prenota|in arrivo|prossimamente|prossime uscite|coming soon|pre-?order|disponibile a breve/i;
 const ok13 = i => { if (!/^97[89]\d{10}$/.test(i)) return false; let t = 0; for (let k = 0; k < 12; k++) t += +i[k] * (k % 2 ? 3 : 1); return (10 - t % 10) % 10 === +i[12]; };
 const to13 = a => { const s = '978' + a.slice(0, 9); let t = 0; for (let k = 0; k < 12; k++) t += +s[k] * (k % 2 ? 3 : 1); return s + (10 - t % 10) % 10; };
@@ -134,7 +141,7 @@ const big = u => String(u || '').replace(/-\d{2,4}x\d{2,4}(?=\.(?:jpe?g|png|webp
 const old = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {};
 const items = new Map();
 for (const x of old.items || []) items.set(x.url, { pub: 'star', ...x });
-for (const s of SRC) {
+for (const s of [...SRC, ...Object.keys((old.pubs) || {}).filter(k => !SRC.some(x => x.k === k)).map(k => ({ k }))]) {
   const f = `${DIR}/${s.k}.json`; if (!fs.existsSync(f)) continue;
   try { const j = JSON.parse(fs.readFileSync(f, 'utf8')); for (const x of j.items || []) items.set(x.url, { ...x, pub: s.k });
     for (const [url, d] of j.checked || []) if (!items.has(url)) items.set(url, { url, pub: s.k, number: null, nonum: 1, detailAt: d }); } catch (e) {}
@@ -205,7 +212,7 @@ async function panini(src) {
       if (!m[1]) continue;
       const url = m[1].trim().replace(/^https?:\/\/[^/]+/, R), slug = (url.match(/\/shp_ita_it\/([a-z0-9-]+)\.html$/) || [])[1]; if (!slug) continue;
       const parts = slug.split('-'); if (parts.length < 4 || !/^it\d+$/.test(parts.at(-1))) continue;
-      const num = /^\d{1,4}$/.test(parts.at(-3)) ? +parts.at(-3) : null; if (num == null) continue;
+      const num = /^\d{1,4}$/.test(parts.at(-3)) ? +parts.at(-3) : null; if (num == null || (num >= 1990 && num <= 2039)) continue; // anni (calendari, agende) non sono numeri di volume
       const o = items.get(url) || {};
       put('panini', { url, title: o.title || parts.slice(0, -3).join(' ') + ' ' + num, slugTitle: parts.slice(0, -3).join(' '), number: num, lastmod: (m[2] || '').slice(0, 10), code: parts.at(-2), ...(img && !o.cover ? { cover: ent(img).replace(/^https?:\/\/[^/]+/, R) } : {}) });
       n++;
@@ -217,12 +224,16 @@ async function panini(src) {
   // prima i volumi senza data o ISBN, i più recenti per primi; una pagina alla volta, con calma (il sito blocca chi va veloce)
   const todo = [...items.values()].filter(x => x.pub === 'panini' && (stale(x) || (x.pv || 0) < 3))
     .sort((a, b) => (!!(a.date && a.isbn) - !!(b.date && b.isbn)) || (b.lastmod || '').localeCompare(a.lastmod || ''));
-  let isb = 0, dat = 0, ko = 0, empty = 0;
-  const det = await pool(todo, +(process.env.PANINI_DETAILS || 900), async x => {
-    const h = await get(x.url.replace(R, B));
+  // il sito Panini mostra una pagina di controllo ("richiede JavaScript") ai programmi: non la aggiro, dopo 5 di fila mi fermo fino a domani
+  let isb = 0, dat = 0, ko = 0, empty = 0, wall = 0, inRow = 0, stop = false;
+  const det = await pool(todo, +(process.env.PANINI_DETAILS || 300), async x => {
+    if (stop) return;
+    const h0 = await get(x.url.replace(R, B));
+    if (h0 && (h0.length < 8000 && /abilitazione di javascript|enable javascript/i.test(h0))) { wall++; if (++inRow >= 5) stop = true; x.wallAt = today; return; }
+    inRow = 0; const h = h0;
     if (!h) ko++;
-    else if (!/data di uscita|isbn/i.test(h)) { empty++; if (dbg.paniniVuote.length < 3) dbg.paniniVuote.push({ url: x.url, bytes: h.length, title: strip((h.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || ''), testo: strip(h).slice(0, 600) }); }
-    if (h && !/data di uscita|isbn/i.test(h)) { x.detailAt = today; x.pv = 3; return; }
+    else if (!/data di uscita/i.test(h)) { empty++; if (dbg.paniniVuote.length < 3) dbg.paniniVuote.push({ url: x.url, bytes: h.length, title: strip((h.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || ''), testo: strip(h).slice(0, 600) }); }
+    if (h && !/data di uscita/i.test(h)) { x.detailAt = today; x.pv = 3; return; }
     if (h) {
       x.pv = 3;
       const ld = (String(h).match(/["'](?:releaseDate|datePublished)["']\s*:\s*["'](20\d{2}-\d{2}-\d{2})/) || [])[1];
@@ -251,7 +262,7 @@ async function panini(src) {
     x.imgAt = today;
   });
   const miss = [...items.values()].filter(x => x.pub === 'panini' && !x.cover).length;
-  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette (ISBN in ${isb}, data in ${dat}${ko ? `, ${ko} non lette${why(B)}` : ''}${empty ? `, ${empty} senza dati` : ''})${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
+  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette (ISBN in ${isb}, data in ${dat}${ko ? `, ${ko} non lette${why(B)}` : ''}${empty ? `, ${empty} senza dati` : ''}${wall ? `, ${wall} bloccate dal controllo anti-robot del sito${stop ? ': mi fermo fino a domani' : ''}` : ''})${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
 }
 
 // ---------- SHOPIFY (J-POP, Edizioni BD, Goen, Musubi, Hollow Press…): /products.json ----------
@@ -298,12 +309,17 @@ async function woo(src) {
         if (dbg[src.k] && dbg[src.k].length < 25 && Math.random() < 0.05) dbg[src.k].push({ name: x.name, cats, attrs: (x.attributes || []).map(a => a.name + ': ' + (a.terms || []).map(t => t.name).join(', ')).join(' · '), brands: (x.brands || []).map(b => b.name).join(', ') });
         if (src.cat && !src.cat.test(cats)) continue;
         if (NOTBOOK.test(strip(x.name) + ' ' + cats)) continue;
-        const title = strip(x.name), v = volOf(title); if (!v) continue;
+        let title = strip(x.name); if (src.author && / – /.test(title)) { const t2 = title.replace(/^[^–]{2,80}?\s+–\s+/, ''); if (volOf(t2)) title = t2; }
+        const v = volOf(title); if (!v) continue;
         const attrs = (x.attributes || []).map(a => a.name + ': ' + (a.terms || []).map(t => t.name).join(', ')).join(' · ');
         const ed = [...(x.attributes || []).filter(a => /editor|publisher|marca|brand|casa/i.test(a.name)).flatMap(a => (a.terms || []).map(t => t.name)), ...(x.brands || []).map(b => b.name)].join(' ');
-        if (src.brand && ed && !src.brand.test(ed)) continue;
         const txt = strip(attrs + ' · ' + (x.short_description || '') + ' · ' + (x.description || ''));
         const date = labDate(txt), st = [x.add_to_cart && x.add_to_cart.text, x.stock_availability && x.stock_availability.text, cats].join(' ');
+        if (src.brand && ed && !src.brand.test(ed)) {
+          if (src.resell) { const k = marcaKey(strip(ed)); marcaName[k] = marcaName[k] || strip(ed);
+            resold.push({ k, url: String(x.permalink || '').replace(B, R), title, serie: v.serie, number: v.number, isbn: cleanIsbn(x.sku) || isbnIn(txt), cover: (x.images && x.images[0] && x.images[0].src) || '', date, ann: !date && (PRE.test(st) || PRE.test(title)) ? 1 : 0, pages: pagesIn(txt) }); }
+          continue;
+        }
         put(src.k, { url: String(x.permalink || '').replace(B, R), title, serie: v.serie, number: v.number, isbn: cleanIsbn(x.sku) || isbnIn(txt),
           cover: (x.images && x.images[0] && x.images[0].src) || '', date, ann: !date && (PRE.test(st) || PRE.test(title)) ? 1 : 0, pages: pagesIn(txt), nd: 1, detailAt: today });
         n++;
@@ -312,7 +328,7 @@ async function woo(src) {
     }
     if (api) break;
   }
-  if (api) return `${n} volumi a catalogo`;
+  if (api) return `${n} volumi a catalogo` + (src.resell ? `, ${resold.length} di altri editori (calendario di riserva)` : '');
   return html(src);
 }
 
@@ -412,9 +428,28 @@ await Promise.all(SRC.filter(s => ONLY.includes(s.k)).map(async s => {
   catch (e) { stats[s.k] = { ok: false, msg: e.message, at: new Date().toISOString(), lastOk: prev.lastOk }; console.log(`${s.name}: ERRORE ${e.message}`); }
 }));
 
+// ---------- calendario di riserva: i volumi di altri editori venduti da Dynit completano ISBN, data e copertina ----------
+const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['’`]/g, '').replace(/\(([^)]*)\)/g, ' $1 ').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(w => w.length > 1 && !/^(?:il|lo|la|gli|le|the|an|di|vol|volume)$/.test(w)).sort().join(' ');
+const SPECIAL = /variant|box|limited|cofanetto|deluxe|special|speciale|collector|bundle|pack|\d+\s*-\s*\d+/i;
+let fused = 0, added = 0;
+if (resold.length) {
+  const idx = new Map();
+  for (const x of items.values()) { if (x.number == null || x.pub === 'dynit') continue; const sr = x.serie || (volOf(x.title) || {}).serie; if (!sr) continue;
+    idx.set(x.pub + '|' + norm(sr) + '#' + x.number, x); if (x.isbn) idx.set(x.pub + '|isbn' + x.isbn, x); }
+  for (const r of resold) {
+    if (SPECIAL.test(r.title)) continue;
+    const o = (r.isbn && idx.get(r.k + '|isbn' + r.isbn)) || idx.get(r.k + '|' + norm(r.serie) + '#' + r.number);
+    if (o) { if (!o.isbn && r.isbn) o.isbn = r.isbn; if (r.date && (!o.date || o.nd)) { o.date = r.date; o.ann = 0; } if (!o.cover && r.cover) o.cover = r.cover; o.via = 'dynit'; o.ls = today; fused++; }
+    else { put(r.k, { url: r.url, title: r.title, serie: r.serie, number: r.number, isbn: r.isbn, cover: r.cover, date: r.date, ann: r.ann, pages: r.pages, nd: r.date ? 0 : 1, via: 'dynit' }); added++; }
+  }
+  console.log(`Calendario di riserva (Dynit): ${fused} volumi completati, ${added} aggiunti`);
+}
+
 fs.mkdirSync(DIR, { recursive: true });
 const pubs = {}; let tot = 0;
-for (const s of SRC) {
+const dynOk = stats.dynit && stats.dynit.ok && stats.dynit.at > new Date(T0).toISOString();
+for (const s of [...SRC, ...[...new Set([...items.values()].map(x => x.pub))].filter(k => !SRC.some(x => x.k === k)).map(k => ({ k, name: marcaName[k] || (old.pubs && old.pubs[k] && old.pubs[k].name) || k, site: '', extra: 1 }))]) {
+  if (s.extra && dynOk) for (const [u, x] of items) if (x.pub === s.k && (!x.ls || age(x.ls) > 14)) items.delete(u);
   if (s.type && stats[s.k] && stats[s.k].ok && stats[s.k].at > new Date(T0).toISOString())
     for (const [u, x] of items) if (x.pub === s.k && (!x.ls || age(x.ls) > 7)) items.delete(u);
   const list = [...items.values()].filter(x => x.pub === s.k && x.number != null && !NOTBOOK.test(x.title || '')).sort((a, b) => (b.date || b.seen || '').localeCompare(a.date || a.seen || ''))
@@ -423,7 +458,7 @@ for (const s of SRC) {
   if (!list.length) { if (stats[s.k]) stats[s.k].count = 0; if (checked.length) fs.writeFileSync(`${DIR}/${s.k}.json`, JSON.stringify({ pub: s.k, name: s.name, items: [], checked }) + '\n'); continue; }
   const pf = {}; for (const x of list) if (x.isbn) pf[x.isbn.slice(0, 8)] = (pf[x.isbn.slice(0, 8)] || 0) + 1;
   fs.writeFileSync(`${DIR}/${s.k}.json`, JSON.stringify({ pub: s.k, name: s.name, updated: new Date().toISOString(), items: list, checked }) + '\n');
-  pubs[s.k] = { name: s.name, site: s.site, file: `${DIR}/${s.k}.json`, count: list.length, pfx: Object.entries(pf).sort((a, b) => b[1] - a[1]).slice(0, 40).map(e => e[0]) };
+  pubs[s.k] = { name: s.name, site: s.site, ...(s.extra ? { via: 'dynit' } : {}), file: `${DIR}/${s.k}.json`, count: list.length, pfx: Object.entries(pf).sort((a, b) => b[1] - a[1]).slice(0, 40).map(e => e[0]) };
   if (stats[s.k]) stats[s.k].count = list.length;
   tot += list.length;
 }
