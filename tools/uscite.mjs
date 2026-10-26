@@ -1,60 +1,122 @@
-// Fumetteca – raccoglie ogni giorno le uscite dai siti ufficiali degli editori e scrive uscite.json
-// (letto da index.html: è sullo stesso sito GitHub Pages, quindi il browser non lo blocca).
-// Editori: Star Comics, Panini (Planet Manga), J-POP. Nessuna libreria esterna (Node 18+).
+// Fumetteca – raccoglie ogni giorno uscite e cataloghi dai siti ufficiali degli editori.
+// Scrive uscite.json (indice: editori, stato, prefissi ISBN) + uscite/<editore>.json (i volumi di ogni editore),
+// letti da index.html sullo stesso sito GitHub Pages: il telefono scarica solo gli editori che servono.
+// Nessuna libreria esterna (Node 18+). Ogni editore è indipendente: se un sito non risponde, gli altri vanno avanti.
 import fs from 'node:fs';
-const OUT = process.env.OUT || 'uscite.json';
-const T = { star: process.env.STAR_BASE || 'https://www.starcomics.com', panini: process.env.PANINI_BASE || 'https://www.panini.it', jpop: process.env.JPOP_BASE || 'https://j-pop.it' };
-const REAL = { star: 'https://www.starcomics.com', panini: 'https://www.panini.it', jpop: 'https://j-pop.it' };
-const ONLY = (process.env.ONLY || 'star,panini,jpop').split(',');
-const PAUSE = +(process.env.PAUSE ?? 400), STAR_WEEKS_BACK = +(process.env.STAR_WEEKS_BACK || 520), DETAILS = +(process.env.DETAILS || 3000);
+const OUT = process.env.OUT || 'uscite.json', DIR = process.env.OUTDIR || 'uscite';
+const PAUSE = +(process.env.PAUSE ?? 400), STAR_WEEKS_BACK = +(process.env.STAR_WEEKS_BACK || 520);
+const DETAILS = +(process.env.DETAILS || 3000), SMALL_DETAILS = +(process.env.SMALL_DETAILS || 250);
 const CONC = +(process.env.CONC || 4), BUDGET = +(process.env.BUDGET_MIN || 60) * 6e4, T0 = Date.now();
+const late = () => Date.now() - T0 > BUDGET;
+
+// ---------- editori: piattaforma del negozio + dove si trova il catalogo ----------
+// shopify: /products.json · woo: WooCommerce (Store API; se è chiusa legge le pagine del negozio) · html: pagine del negozio
+const SRC = [
+  { k: 'star', name: 'Star Comics', site: 'https://www.starcomics.com', run: star },
+  { k: 'panini', name: 'Panini Comics', site: 'https://www.panini.it', run: panini },
+  { k: 'jpop', name: 'J-POP Manga', site: 'https://j-pop.it', type: 'shopify', pre: ['in-preordine'] },
+  { k: 'bd', name: 'Edizioni BD', site: 'https://www.edizionibd.it', type: 'shopify', pre: ['in-preordine', 'preordini'] },
+  { k: 'goen', name: 'Goen (RW Edizioni)', site: 'https://rw-edizioni.myshopify.com', type: 'shopify' },
+  { k: 'musubi', name: 'Musubi Edizioni', site: 'https://musubiedizioni.it', type: 'shopify' },
+  { k: 'hollow', name: 'Hollow Press', site: 'https://hollow-press.net', type: 'shopify' },
+  { k: 'magic', name: 'Magic Press', site: 'https://b2c.magicpressedizioni.it', type: 'html', list: ['/2-home?page={n}'], preList: ['/module/preorder/allpreorderdetails'], prod: /^\/(?:[a-z0-9-]+\/)?\d+-[a-z0-9-]+\.html$/, maxPages: 150 },
+  { k: 'nipponshock', name: 'Nippon Shock Edizioni', site: 'https://www.nipponshock.com', type: 'html', list: ['/shop/manga'], prod: /^\/shop\/[a-z0-9-]+$/ },
+  { k: 'dokusho', name: 'Dokusho Edizioni', site: 'https://dokusho.it', type: 'woo', list: ['/index.php/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
+  { k: 'dynit', name: 'Dynit', site: 'https://www.dynit.it', type: 'woo', cat: /manga/i, list: ['/prodotti/manga/page/{n}/'], prod: /\/prodott[oi]\/[^/]+\/?$/ },
+  { k: 'toshokan', name: 'Toshokan', site: 'https://toshokan.it', type: 'woo', list: ['/prodotti/page/{n}/'], prod: /\/prodotti\/[^/]+\/?$/ },
+  { k: 'hikari', name: 'Hikari Edizioni', site: 'https://hikariedizioni.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
+  { k: 'e001', name: '001 Edizioni', site: 'https://www.001edizioni.com', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/ },
+  { k: 'ishi', name: 'Ishi Publishing', site: 'https://ishipublishing.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/ },
+  { k: 'bonelli', name: 'Sergio Bonelli Editore', site: 'https://www.sergiobonelli.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/, maxPages: 200 },
+  { k: 'cosmo', name: 'Editoriale Cosmo', site: 'https://www.editorialecosmo.it', type: 'woo', list: ['/negozio/page/{n}/'], prod: /\/product\/[^/]+\/?$/, maxPages: 200 },
+  { k: 'npe', name: 'Edizioni NPE', site: 'https://edizioninpe.it', type: 'woo', list: ['/store/page/{n}/'], prod: /\/product\/[^/]+\/?$/ },
+  { k: 'shockdom', name: 'Shockdom', site: 'https://shockdom.com', type: 'woo', list: ['/negozio/page/{n}/'], prod: /\/negozio\/[^/]+\/[^/]+\/?$/ },
+  { k: 'tunue', name: 'Tunué', site: 'https://www.tunue.com', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/product\/[^/]+\/?$/ },
+  { k: 'coconino', name: 'Coconino Press', site: 'https://www.coconinopress.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
+  { k: 'bao', name: 'BAO Publishing', site: 'https://baopublishing.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product|fumetto)\/[^/]+\/?$/ },
+];
+// per le prove: BASE_<EDITORE>=http://127.0.0.1:porta (vale anche il vecchio STAR_BASE, PANINI_BASE, JPOP_BASE)
+const baseOf = s => process.env['BASE_' + s.k.toUpperCase()] || process.env[s.k.toUpperCase() + '_BASE'] || s.site;
+const ONLY = (process.env.ONLY || SRC.map(s => s.k).join(',')).split(',');
+
+// ---------- strumenti ----------
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const HEAD = { 'user-agent': 'Mozilla/5.0 (compatible; Fumetteca personal release checker; +https://github.com)', 'accept-language': 'it-IT,it;q=0.9' };
 async function get(u, json) {
   for (let t = 0; t < 3; t++) {
-    try { const r = await fetch(u, { headers: HEAD }); if (r.ok) return json ? await r.json() : await r.text(); if (r.status === 404) return null; } catch (e) {}
+    try {
+      const r = await fetch(u, { headers: json ? { ...HEAD, accept: 'application/json' } : HEAD });
+      if (r.ok) { const x = await r.text(); if (!json) return x; try { return JSON.parse(x); } catch (e) { return null; } }
+      if ([401, 403, 404, 410].includes(r.status)) return null;
+    } catch (e) {}
     await sleep(1500 * (t + 1));
   }
   return null;
 }
-const strip = h => String(h || '').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')
-  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#0?39;|&apos;|&rsquo;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+const ENT = { nbsp: ' ', amp: '&', quot: '"', apos: "'", rsquo: "'", lsquo: "'", ldquo: '"', rdquo: '"', ndash: '–', mdash: '—', hellip: '…', egrave: 'è', eacute: 'é', agrave: 'à', ograve: 'ò', ugrave: 'ù', igrave: 'ì', deg: '°', ordm: 'º' };
+const ent = s => String(s || '').replace(/&#x([0-9a-f]+);/gi, (m, c) => String.fromCodePoint(parseInt(c, 16))).replace(/&#(\d+);/g, (m, c) => String.fromCodePoint(+c)).replace(/&([a-z]+);/gi, (m, c) => ENT[c.toLowerCase()] ?? m);
+const strip = h => ent(String(h || '').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 const MESI = { gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6, luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12 };
 const p2 = x => String(x).padStart(2, '0');
 function anyDate(t) {
-  let m = t.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/); if (m) return `${m[3]}-${p2(m[2])}-${p2(m[1])}`;
+  let m = t.match(/\b(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})\b/); if (m) return `${m[3]}-${p2(m[2])}-${p2(m[1])}`;
   m = t.match(/\b(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s+(\d{4})\b/i); if (m) return `${m[3]}-${p2(MESI[m[2].toLowerCase()])}-${p2(m[1])}`;
   m = t.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/); return m ? m[0] : '';
 }
+// una data vale solo se è preceduta da un'etichetta di uscita (le pagine sono piene di altre date)
+const DLAB = /(?:data di uscita|data d'uscita|data uscita|in uscita (?:il|dal)|uscita prevista|disponibile dal|data di pubblicazione|release date|uscita)\s*:?\s*\D{0,20}?(\d{1,2}[\/.]\d{1,2}[\/.]\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i;
+const labDate = t => { const m = String(t).match(DLAB); return m ? anyDate(m[1]) : ''; };
+const PRE = /pre-?ordin|prenota|in arrivo|prossimamente|prossime uscite|coming soon|pre-?order|disponibile a breve/i;
 const ok13 = i => { if (!/^97[89]\d{10}$/.test(i)) return false; let t = 0; for (let k = 0; k < 12; k++) t += +i[k] * (k % 2 ? 3 : 1); return (10 - t % 10) % 10 === +i[12]; };
 const to13 = a => { const s = '978' + a.slice(0, 9); let t = 0; for (let k = 0; k < 12; k++) t += +s[k] * (k % 2 ? 3 : 1); return s + (10 - t % 10) % 10; };
 const isbnIn = t => (String(t).match(/97[89][\d-]{10,16}/g) || []).map(x => x.replace(/-/g, '')).find(ok13) || '';
-const meta = (html, prop) => { const m = html.match(new RegExp('<meta[^>]+property=["\']' + prop + '["\'][^>]*content=(["\'])(.*?)\\1', 'i')) || html.match(new RegExp('<meta[^>]+content=(["\'])(.*?)\\1[^>]*property=["\']' + prop + '["\']', 'i')); return m ? m[2] : ''; };
-const ogImage = (html, base) => { const u = meta(html, 'og:image'); return u ? new URL(u.replace(/&amp;/g, '&'), base).href : ''; };
+const cleanIsbn = s => { s = String(s || '').replace(/[^0-9X]/gi, ''); return ok13(s) ? s : /^(?:88|12)\d{7}[\dX]$/i.test(s) ? to13(s) : ''; };
+const meta = (html, prop) => { const m = html.match(new RegExp('<meta[^>]+(?:property|name)=["\']' + prop + '["\'][^>]*content=(["\'])(.*?)\\1', 'i')) || html.match(new RegExp('<meta[^>]+content=(["\'])(.*?)\\1[^>]*(?:property|name)=["\']' + prop + '["\']', 'i')); return m ? m[2] : ''; };
+const ogImage = (html, base) => { const u = meta(html, 'og:image'); return u ? new URL(ent(u), base).href : ''; };
 const pagesIn = t => +((t.match(/pagine\D{0,3}(\d{2,4})\b/i) || t.match(/\b(\d{2,4})\s*pagine/i) || [])[1] || 0);
-const numIn = t => { const m = t.match(/\b(?:n\.?|vol\.?|volume|#)\s*(\d{1,4})\b/i) || t.match(/[\s-](\d{1,4})\s*$/); return m ? +m[1] : null; };
-// legge più schede in parallelo (CONC alla volta), prima quelle senza copertina, poi le più recenti; si ferma al tetto o al tempo massimo
-const first = k => (a, b) => (!!a.cover - !!b.cover) || (b[k] || '').localeCompare(a[k] || '');
-async function pool(list, max, fn) {
-  let i = 0; const run = async () => { while (i < Math.min(list.length, max) && Date.now() - T0 < BUDGET) { const x = list[i++]; await fn(x); await sleep(PAUSE); } };
-  await Promise.all(Array.from({ length: CONC }, run)); return i;
-}
 const esc = s => s.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&');
+// numero e serie dal titolo: "Slime, Vol. 10 – Limited", "JYOSHIKOHEI #2 (di 7)", "COLORLESS (1)", "Al mio caro M 1 (di 3)", "ALPHA 17 – LIBERTY SHIP", "Tex n° 780"
+function volOf(title) {
+  const t = String(title || '').replace(/\s+/g, ' ').trim(); let m;
+  if ((m = t.match(/\b(?:vol(?:ume)?|n[°º]?|num|numero)\s*\.?\s*#?\s*0*(\d{1,4})(?![.,]\d)\b/i)) ||
+      (m = t.match(/#\s*0*(\d{1,4})(?![.,]\d)\b/)) ||
+      (m = t.match(/\(\s*0*(\d{1,4})\s*(?:di\s*\d+\s*)?\)/i)) ||
+      (m = [...t.matchAll(/\s0*(\d{1,3})(?=\s*(?:\(di\s*\d+\)|[–—:+]|-\s|$))/g)].pop())) {
+    const number = +m[1], serie = t.slice(0, m.index).replace(/[\s,.:;–—\-(#]+$/, '').trim();
+    return serie && number >= 1 ? { number, serie } : null;
+  }
+  return null;
+}
+// immagine grande al posto della miniatura (WordPress -300x300, PrestaShop home_default, Shopify _200x)
+const big = u => String(u || '').replace(/-\d{2,4}x\d{2,4}(?=\.(?:jpe?g|png|webp)\b)/i, '').replace(/-(?:home|small|medium|cart)_default(?=\/)/, '-large_default').replace(/_(?:\d+x\d*|small|medium|compact)(?=\.(?:jpe?g|png|webp))/i, '');
+
+// ---------- archivio: vecchio uscite.json (v1, tutto in un file) oppure indice v2 + un file per editore ----------
 const old = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {};
-const items = new Map((old.items || []).map(x => [x.url, x]));
+const items = new Map();
+for (const x of old.items || []) items.set(x.url, { pub: 'star', ...x });
+for (const s of SRC) {
+  const f = `${DIR}/${s.k}.json`; if (!fs.existsSync(f)) continue;
+  try { for (const x of JSON.parse(fs.readFileSync(f, 'utf8')).items || []) items.set(x.url, { ...x, pub: s.k }); } catch (e) {}
+}
 const stats = old.stats || {}, state = old.state || {};
 const now = new Date(), today = now.toISOString().slice(0, 10);
-const put = (pub, e) => { const o = items.get(e.url) || {}; items.set(e.url, { ...o, ...e, pub }); };
-const stale = x => !x.detailAt || ((!x.cover || !x.isbn || !x.date || x.date > today) && (Date.parse(today) - Date.parse(x.detailAt)) > 6 * 864e5);
+const put = (pub, e) => { const o = items.get(e.url) || { seen: today }; items.set(e.url, { ...o, ...e, pub }); };
+const stale = x => !x.detailAt || ((!x.cover || !x.isbn || (!x.date && !x.nd) || x.date > today) && (Date.parse(today) - Date.parse(x.detailAt)) > 6 * 864e5);
+const first = k => (a, b) => (!!a.cover - !!b.cover) || (b[k] || '').localeCompare(a[k] || '');
+async function pool(list, max, fn) {
+  let i = 0; const run = async () => { while (i < Math.min(list.length, max) && !late()) { const x = list[i++]; await fn(x); await sleep(PAUSE); } };
+  await Promise.all(Array.from({ length: CONC }, run)); return i;
+}
 
 // ---------- STAR COMICS: pagine settimanali /uscite/AAAA-MM-GG + scheda del volume ----------
-async function star() {
+async function star(src) {
+  const B = baseOf(src), R = src.site;
   const done = new Set(state.starWeeks || []); let fetched = 0, failed = 0;
   const d0 = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()), lastTue = d0 - ((new Date(d0).getUTCDay() + 5) % 7) * 864e5;
   for (let w = -STAR_WEEKS_BACK; w <= 12; w++) {
     const d = new Date(lastTue + w * 7 * 864e5).toISOString().slice(0, 10);
     if (done.has(d) && w < -6) continue;
-    const h = await get(`${T.star}/uscite/${d}`); if (h == null) { failed++; continue; }
+    const h = await get(`${B}/uscite/${d}`); if (h == null) { failed++; continue; }
     const re = /href=["'](?:https?:\/\/(?:www\.)?starcomics\.com)?(\/fumetto\/[a-z0-9-]+)\/?["']/gi, hits = []; let m;
     while ((m = re.exec(h))) hits.push({ p: m[1].toLowerCase(), i: m.index });
     const seen = new Set();
@@ -65,15 +127,15 @@ async function star() {
       const titles = [...seg.matchAll(new RegExp('href=["\'][^"\']*' + esc(x.p) + '/?["\'][^>]*>([\\s\\S]*?)</a>', 'gi'))].map(y => strip(y[1])).filter(Boolean).sort((a, b) => b.length - a.length);
       const text = strip(seg), title = (titles.find(t => /\bn\.?\s*\d/i.test(t)) || titles[0] || text.slice(0, 120)).slice(0, 160);
       const nm = title.match(/\bn\.?\s*(\d{1,4})\b/i) || x.p.match(/-(\d{1,4})$/);
-      put('star', { url: REAL.star + x.p, title, number: nm ? +nm[1] : null, date: anyDate(text) || d });
+      put('star', { url: R + x.p, title, number: nm ? +nm[1] : null, date: anyDate(text) || d });
     }
     if (d < today) done.add(d); fetched++; await sleep(PAUSE);
   }
   state.starWeeks = [...done].sort();
   const todo = [...items.values()].filter(x => x.pub === 'star' && stale(x)).sort(first('date'));
   const det = await pool(todo, DETAILS, async x => {
-    const h = await get(x.url.replace(REAL.star, T.star));
-    if (h) { const t = strip(h); x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, REAL.star) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0; }
+    const h = await get(x.url.replace(R, B));
+    if (h) { const t = strip(h); x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, R) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0; }
     x.detailAt = today;
   });
   const left = [...items.values()].filter(x => x.pub === 'star' && !x.cover).length;
@@ -81,66 +143,170 @@ async function star() {
   return `${fetched} settimane lette, ${det} schede` + (left ? `, ${left} ancora senza copertina` : ', tutte con copertina');
 }
 
-// ---------- PANINI (Planet Manga): mappa del sito dei manga + pagina prodotto ----------
-async function panini() {
-  const sm = await get(`${T.panini}/media/shp_ita_it/manga-sitemap.xml`);
-  if (!sm) throw Error('mappa del sito Panini non raggiungibile');
-  let n = 0;
-  for (const m of sm.matchAll(/<url>\s*<loc>([^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?/g)) {
-    const url = m[1].trim().replace(T.panini, REAL.panini), slug = (url.match(/\/shp_ita_it\/([a-z0-9-]+)\.html$/) || [])[1]; if (!slug) continue;
-    const parts = slug.split('-'); if (parts.length < 4 || !/^it\d+$/.test(parts.at(-1))) continue;
-    const num = /^\d{1,4}$/.test(parts.at(-3)) ? +parts.at(-3) : null; if (num == null) continue;
-    const o = items.get(url) || {};
-    put('panini', { url, title: o.title || parts.slice(0, -3).join(' ') + ' ' + num, slugTitle: parts.slice(0, -3).join(' '), number: num, lastmod: (m[2] || '').slice(0, 10) });
-    n++;
+// ---------- PANINI: mappe del sito (manga + quelle dei fumetti dichiarate in robots.txt) + pagina prodotto ----------
+async function panini(src) {
+  const B = baseOf(src), R = src.site;
+  const maps = new Set((process.env.PANINI_MAPS || 'manga-sitemap.xml').split(',').map(f => `/media/shp_ita_it/${f.trim()}`));
+  const rob = await get(`${B}/robots.txt`);
+  for (const m of String(rob || '').matchAll(/^\s*sitemap:\s*(\S+)/gim)) {
+    const p = m[1].replace(/^https?:\/\/[^/]+/, '');
+    if (/shp_ita_it/.test(p) && /(?:manga|comics?|fumetti|marvel|dc|disney)[-_]?sitemap/i.test(p)) maps.add(p);
   }
-  const todo = [...items.values()].filter(x => x.pub === 'panini' && stale(x)).sort(first('lastmod'));
-  const det = await pool(todo, DETAILS, async x => {
-    const h = await get(x.url.replace(REAL.panini, T.panini));
-    if (h) {
-      const t = strip(h), lab = t.match(/(?:data di uscita|in uscita il|uscita)\D{0,25}(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i);
-      const og = meta(h, 'og:title'), h1 = (h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
-      x.title = strip(og || h1 || '') .replace(/\s*-\s*Panini Comics\s*$/i, '') || x.title;
-      x.date = (lab ? anyDate(lab[1]) : '') || x.date || '';
-      x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, REAL.panini) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
-      x.imprint = /planet manga/i.test(t) ? 'Planet Manga' : (x.imprint || '');
-    }
-    x.detailAt = today;
-  });
-  return `${n} volumi nella mappa, ${det} schede lette`;
-}
-
-// ---------- J-POP (negozio Shopify): catalogo /products.json + preordini ----------
-async function jpop() {
-  const pre = new Set(); let n = 0;
-  for (let p = 1; p <= 10; p++) {
-    const j = await get(`${T.jpop}/collections/in-preordine/products.json?limit=250&page=${p}`, true);
-    if (!j || !j.products || !j.products.length) break; j.products.forEach(x => pre.add(x.handle)); await sleep(PAUSE);
-  }
-  for (let p = 1; p <= 60; p++) {
-    const j = await get(`${T.jpop}/products.json?limit=250&page=${p}`, true);
-    if (!j || !j.products) { if (p === 1) throw Error('catalogo J-POP non raggiungibile'); break; }
-    if (!j.products.length) break;
-    for (const x of j.products) {
-      const title = String(x.title || '').trim(), num = numIn(title.replace(/\(.*?\)/g, ' ')); if (num == null) continue;
-      const tags = x.tags || [], serie = (Array.isArray(tags) ? tags : String(tags).split(',')).map(s => String(s).trim()).find(s => /^serie:/i.test(s));
-      const asin = (String(x.body_html || '').match(/data-csa-c-asin=\\?["'](\d{9}[\dX])/) || [])[1];
-      const ann = pre.has(x.handle) || (Array.isArray(tags) && tags.includes('preordine'));
-      put('jpop', { url: `${REAL.jpop}/products/${x.handle}`, title, number: num, serie: serie ? serie.slice(6).trim() : '', ann: ann ? 1 : 0,
-        date: ann ? '' : String(x.published_at || x.created_at || '').slice(0, 10), isbn: asin ? to13(asin) : '', cover: (x.images && x.images[0] && x.images[0].src) || '', detailAt: today });
+  let n = 0, read = 0;
+  for (const mp of maps) {
+    const sm = await get(B + mp); if (!sm) continue; read++;
+    for (const m of sm.matchAll(/<url>\s*<loc>([^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?/g)) {
+      const url = m[1].trim().replace(/^https?:\/\/[^/]+/, R), slug = (url.match(/\/shp_ita_it\/([a-z0-9-]+)\.html$/) || [])[1]; if (!slug) continue;
+      const parts = slug.split('-'); if (parts.length < 4 || !/^it\d+$/.test(parts.at(-1))) continue;
+      const num = /^\d{1,4}$/.test(parts.at(-3)) ? +parts.at(-3) : null; if (num == null) continue;
+      const o = items.get(url) || {};
+      put('panini', { url, title: o.title || parts.slice(0, -3).join(' ') + ' ' + num, slugTitle: parts.slice(0, -3).join(' '), number: num, lastmod: (m[2] || '').slice(0, 10) });
       n++;
     }
     await sleep(PAUSE);
   }
-  return `${n} volumi a catalogo, ${pre.size} in preordine`;
+  if (!read) throw Error('mappa del sito Panini non raggiungibile');
+  const todo = [...items.values()].filter(x => x.pub === 'panini' && stale(x)).sort(first('lastmod'));
+  const det = await pool(todo, DETAILS, async x => {
+    const h = await get(x.url.replace(R, B));
+    if (h) {
+      const t = strip(h), lab = t.match(/(?:data di uscita|in uscita il|uscita)\D{0,25}(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i);
+      const og = meta(h, 'og:title'), h1 = (h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
+      x.title = strip(og || h1 || '').replace(/\s*-\s*Panini Comics\s*$/i, '') || x.title;
+      x.date = (lab ? anyDate(lab[1]) : '') || x.date || '';
+      x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, R) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
+      x.imprint = /planet manga/i.test(t) ? 'Planet Manga' : (x.imprint || '');
+    }
+    x.detailAt = today;
+  });
+  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette`;
 }
 
-for (const [k, f] of [['star', star], ['panini', panini], ['jpop', jpop]]) {
-  if (!ONLY.includes(k)) continue;
-  try { const msg = await f(); stats[k] = { ok: true, msg, at: new Date().toISOString() }; console.log(k + ': ' + msg); }
-  catch (e) { stats[k] = { ok: false, msg: e.message, at: new Date().toISOString() }; console.log(k + ': ERRORE ' + e.message); }
+// ---------- SHOPIFY (J-POP, Edizioni BD, Goen, Musubi, Hollow Press…): /products.json ----------
+async function shopify(src) {
+  const B = baseOf(src), R = src.site, pre = new Set(); let n = 0;
+  for (const c of src.pre || ['in-preordine', 'preordine', 'preordini', 'pre-order', 'preorder', 'prossime-uscite']) {
+    for (let p = 1; p <= 10; p++) {
+      const j = await get(`${B}/collections/${c}/products.json?limit=250&page=${p}`, true);
+      if (!j || !j.products || !j.products.length) break; j.products.forEach(x => pre.add(x.handle)); await sleep(PAUSE);
+    }
+  }
+  for (let p = 1; p <= (src.maxPages || 80) && !late(); p++) {
+    const j = await get(`${B}/products.json?limit=250&page=${p}`, true);
+    if (!j || !j.products) { if (p === 1) throw Error('catalogo non raggiungibile'); break; }
+    if (!j.products.length) break;
+    for (const x of j.products) {
+      // le parentesi senza numeri ("(BOX VOL. 1-3)", "(Regular)") non contano per il numero del volume
+      const title = strip(x.title), v = volOf(title.replace(/\((?![\d\s]*(?:di\s*\d+\s*)?\))[^)]*\)/gi, ' ')); if (!v) continue;
+      const tags = (Array.isArray(x.tags) ? x.tags : String(x.tags || '').split(',')).map(s => String(s).trim());
+      const serie = tags.find(s => /^serie:/i.test(s));
+      const vars = x.variants || [], body = String(x.body_html || ''), txt = strip(body);
+      const asin = (body.match(/data-csa-c-asin=\\?["'](\d{9}[\dX])/) || [])[1];
+      const isbn = vars.map(y => cleanIsbn(y.barcode) || cleanIsbn(y.sku)).find(Boolean) || (asin ? to13(asin) : '') || isbnIn(txt);
+      const date = labDate(txt), ann = !date && (pre.has(x.handle) || tags.some(t => PRE.test(t)) || PRE.test(title));
+      put(src.k, { url: `${R}/products/${x.handle}`, title, serie: serie ? serie.slice(6).trim() : v.serie, number: v.number, ann: ann ? 1 : 0,
+        date: date || (ann ? '' : String(x.published_at || x.created_at || '').slice(0, 10)), isbn, cover: big((x.images && x.images[0] && x.images[0].src) || ''), pages: pagesIn(txt), detailAt: today });
+      n++;
+    }
+    await sleep(PAUSE);
+  }
+  return `${n} volumi a catalogo` + (pre.size ? `, ${pre.size} in preordine` : '');
 }
-const list = [...items.values()].filter(x => x.number != null).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), stats, state, items: list }) + '\n');
-console.log(`Totale voci: ${list.length}`);
+
+// ---------- WOOCOMMERCE: Store API pubblica (/wc/store/v1/products); se è chiusa, pagine del negozio ----------
+async function woo(src) {
+  const B = baseOf(src), R = src.site; let n = 0, api = 0;
+  for (const root of ['/?rest_route=/wc/store/v1/products&', '/wp-json/wc/store/v1/products?']) {
+    for (let p = 1; p <= (src.maxPages || 100) && !late(); p++) {
+      const j = await get(`${B}${root}per_page=100&page=${p}&orderby=date&order=desc`, true);
+      if (!Array.isArray(j)) break; api = 1; if (!j.length) break;
+      for (const x of j) {
+        const cats = [...(x.categories || []), ...(x.tags || [])].map(c => strip(c.name) + ' ' + c.slug).join(' ');
+        if (src.cat && !src.cat.test(cats)) continue;
+        const title = strip(x.name), v = volOf(title); if (!v) continue;
+        const attrs = (x.attributes || []).map(a => a.name + ': ' + (a.terms || []).map(t => t.name).join(', ')).join(' · ');
+        const txt = strip(attrs + ' · ' + (x.short_description || '') + ' · ' + (x.description || ''));
+        const date = labDate(txt), st = [x.add_to_cart && x.add_to_cart.text, x.stock_availability && x.stock_availability.text, cats].join(' ');
+        put(src.k, { url: String(x.permalink || '').replace(B, R), title, serie: v.serie, number: v.number, isbn: cleanIsbn(x.sku) || isbnIn(txt),
+          cover: (x.images && x.images[0] && x.images[0].src) || '', date, ann: !date && (PRE.test(st) || PRE.test(title)) ? 1 : 0, pages: pagesIn(txt), nd: 1, detailAt: today });
+        n++;
+      }
+      if (j.length < 100) break; await sleep(PAUSE);
+    }
+    if (api) break;
+  }
+  if (api) return `${n} volumi a catalogo`;
+  return html(src);
+}
+
+// ---------- PAGINE DEL NEGOZIO: elenco prodotti pagina per pagina + scheda dei volumi nuovi ----------
+function listProducts(h, src, B) {
+  const re = /href=["']([^"'#]+)["']/gi, hits = [], org = new URL(B).origin; let m;
+  while ((m = re.exec(h))) {
+    let u; try { u = new URL(ent(m[1]), B + '/'); } catch (e) { continue; }
+    if (u.origin !== org || !src.prod.test(u.pathname)) continue;
+    hits.push({ u: u.origin + u.pathname, i: m.index });
+  }
+  const out = [], seen = new Set();
+  for (let k = 0; k < hits.length; k++) {
+    const x = hits[k]; if (seen.has(x.u)) continue; seen.add(x.u);
+    let j = k + 1; while (j < hits.length && hits[j].u === x.u) j++;
+    const seg = h.slice(h.lastIndexOf('<', x.i), j < hits.length ? hits[j].i : x.i + 2500);
+    const titles = [...seg.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>|<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>|\b(?:alt|title)=["']([^"']{3,})["']/gi)]
+      .map(y => strip(y[1] || y[2] || y[3])).filter(t => t && !/^(?:aggiungi|leggi|acquista|scopri|dettagli|add to cart|compra|preordina)/i.test(t)).sort((a, b) => b.length - a.length);
+    const title = (titles.find(t => volOf(t)) || titles[0] || '').slice(0, 200);
+    const img = (seg.match(/<img\b[^>]*?\b(?:data-src|data-lazy-src|data-original|src)=["']([^"']+)["']/i) || [])[1];
+    out.push({ url: x.u, title, cover: img && !/^data:/.test(img) ? big(new URL(ent(img), B + '/').href) : '', text: strip(seg).slice(0, 600) });
+  }
+  return out;
+}
+async function html(src) {
+  const B = baseOf(src), R = src.site; let n = 0, pages = 0;
+  for (const L of [...src.list.map(u => ({ u })), ...(src.preList || []).map(u => ({ u, ann: 1 }))]) {
+    const seen = new Set();
+    for (let p = 1; p <= (L.u.includes('{n}') ? (src.maxPages || 80) : 1) && !late(); p++) {
+      const h = await get(B + L.u.replace('{n}', p)); if (!h) break; pages++;
+      let fresh = 0;
+      for (const f of listProducts(h, src, B)) {
+        if (seen.has(f.url)) continue; seen.add(f.url); fresh++;
+        const v = volOf(f.title); if (!v) continue;
+        const url = f.url.replace(B, R), o = items.get(url) || {}, date = labDate(f.text);
+        put(src.k, { url, title: f.title, serie: v.serie, number: v.number, cover: f.cover || o.cover || '', isbn: isbnIn(f.url) || isbnIn(f.text) || o.isbn || '',
+          date: date || o.date || '', ann: L.ann || (!date && !o.date && PRE.test(f.text)) ? 1 : 0, nd: 1 });
+        n++;
+      }
+      if (!fresh) break; await sleep(PAUSE);
+    }
+  }
+  if (!pages) throw Error('negozio non raggiungibile');
+  const todo = [...items.values()].filter(x => x.pub === src.k && stale(x)).sort((a, b) => (!!a.detailAt - !!b.detailAt) || (b.seen || '').localeCompare(a.seen || ''));
+  const det = await pool(todo, SMALL_DETAILS, async x => {
+    const h = await get(x.url.replace(R, B));
+    if (h) { const t = strip(h); x.isbn = x.isbn || isbnIn(t); x.cover = x.cover || ogImage(h, R); x.pages = x.pages || pagesIn(t); x.date = labDate(t) || x.date || ''; if (x.date) x.ann = 0; }
+    x.detailAt = today;
+  });
+  return `${n} volumi a catalogo (dalle pagine del negozio), ${det} schede lette`;
+}
+
+// ---------- via: tutti gli editori in parallelo (ognuno con le sue pause, siti diversi) ----------
+await Promise.all(SRC.filter(s => ONLY.includes(s.k)).map(async s => {
+  const prev = stats[s.k] || {};
+  try { const msg = await (s.run || { shopify, woo, html }[s.type])(s); stats[s.k] = { ok: true, msg, at: new Date().toISOString() }; stats[s.k].lastOk = stats[s.k].at; console.log(`${s.name}: ${msg}`); }
+  catch (e) { stats[s.k] = { ok: false, msg: e.message, at: new Date().toISOString(), lastOk: prev.lastOk }; console.log(`${s.name}: ERRORE ${e.message}`); }
+}));
+
+fs.mkdirSync(DIR, { recursive: true });
+const pubs = {}; let tot = 0;
+for (const s of SRC) {
+  const list = [...items.values()].filter(x => x.pub === s.k && x.number != null).sort((a, b) => (b.date || b.seen || '').localeCompare(a.date || a.seen || ''))
+    .map(({ pub, ...x }) => x);
+  if (!list.length) { if (stats[s.k]) stats[s.k].count = 0; continue; }
+  const pf = {}; for (const x of list) if (x.isbn) pf[x.isbn.slice(0, 8)] = (pf[x.isbn.slice(0, 8)] || 0) + 1;
+  fs.writeFileSync(`${DIR}/${s.k}.json`, JSON.stringify({ pub: s.k, name: s.name, updated: new Date().toISOString(), items: list }) + '\n');
+  pubs[s.k] = { name: s.name, site: s.site, file: `${DIR}/${s.k}.json`, count: list.length, pfx: Object.entries(pf).sort((a, b) => b[1] - a[1]).slice(0, 40).map(e => e[0]) };
+  if (stats[s.k]) stats[s.k].count = list.length;
+  tot += list.length;
+}
+fs.writeFileSync(OUT, JSON.stringify({ version: 2, updated: new Date().toISOString(), stats, state, pubs }) + '\n');
+console.log(`Totale voci: ${tot} (${Object.keys(pubs).length} editori con volumi)`);
 if (Object.values(stats).every(s => !s.ok)) process.exit(1);
