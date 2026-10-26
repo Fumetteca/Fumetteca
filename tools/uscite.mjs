@@ -3,9 +3,17 @@
 // letti da index.html sullo stesso sito GitHub Pages: il telefono scarica solo gli editori che servono.
 // Nessuna libreria esterna (Node 18+). Ogni editore è indipendente: se un sito non risponde, gli altri vanno avanti.
 import fs from 'node:fs';
+import http from 'node:http';
+import { spawnSync } from 'node:child_process';
+// alcuni negozi (es. Magic Press) mandano intestazioni molto grandi: Node le rifiuta (UND_ERR_HEADERS_OVERFLOW)
+// se non è avviato con un limite più alto, quindi mi rilancio da solo con --max-http-header-size
+if (http.maxHeaderSize < 262144 && !process.env.FUMETTECA_RELAUNCH) {
+  const r = spawnSync(process.execPath, ['--max-http-header-size=262144', ...process.argv.slice(1)], { stdio: 'inherit', env: { ...process.env, FUMETTECA_RELAUNCH: '1' } });
+  process.exit(r.status ?? 1);
+}
 const OUT = process.env.OUT || 'uscite.json', DIR = process.env.OUTDIR || 'uscite';
 const PAUSE = +(process.env.PAUSE ?? 400), STAR_WEEKS_BACK = +(process.env.STAR_WEEKS_BACK || 520);
-const DETAILS = +(process.env.DETAILS || 3000), SMALL_DETAILS = +(process.env.SMALL_DETAILS || 250);
+const DETAILS = +(process.env.DETAILS || 3000), SMALL_DETAILS = +(process.env.SMALL_DETAILS || 1000);
 const CONC = +(process.env.CONC || 4), BUDGET = +(process.env.BUDGET_MIN || 60) * 6e4, T0 = Date.now();
 const late = () => Date.now() - T0 > BUDGET;
 
