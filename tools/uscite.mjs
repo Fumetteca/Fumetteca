@@ -98,6 +98,12 @@ function anyDate(t) {
 // una data vale solo se è preceduta da un'etichetta di uscita (le pagine sono piene di altre date)
 const DLAB = /(?:data di uscita|data d'uscita|data uscita|in uscita (?:il|dal)|uscita prevista|disponibile dal|data di pubblicazione|release date|uscita)\s*:?\s*\D{0,20}?(\d{1,2}[\/.]\d{1,2}[\/.]\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i;
 const labDate = t => { const m = String(t).match(DLAB); return m ? anyDate(m[1]) : ''; };
+// ISBN dai dati strutturati della pagina (JSON-LD, microdati) o da un'etichetta ISBN/EAN; poi qualunque ISBN valido nel testo
+const isbnPage = (h, t) => { const m = String(h).match(/["'](?:gtin13|gtin|isbn|ean)["']\s*:\s*["']?(97[89][\d-]{10,16})/i) || String(h).match(/itemprop=["'](?:isbn|gtin13)["'][^>]*content=["'](97[89][\d-]{10,16})/i) || String(t).match(/(?:isbn|ean|codice a barre)(?:\s*-?13)?\s*:?\s*(97[89][\d -]{10,18})/i);
+  const i = m ? m[1].replace(/[^\d]/g, '') : ''; return ok13(i) ? i : isbnIn(t); };
+const goodImg = u => u && !/placeholder|logo|default[-_]image|no[-_]?image/i.test(u) ? u : '';
+// prodotti che non sono libri (Dynit, Tunué… vendono anche DVD, Blu-ray, magliette, gadget)
+const NOTBOOK = /\beps?\.?\s*\d|\bepisodi\b|\b(?:dvd|blu-?ray|bluray|4k|uhd|steelbook|cd audio|vinile|t-?shirt|maglietta|felpa|poster|tazza|peluche|action figure|gadget|portachiavi|spilla|shopper)\b/i;
 const PRE = /pre-?ordin|prenota|in arrivo|prossimamente|prossime uscite|coming soon|pre-?order|disponibile a breve/i;
 const ok13 = i => { if (!/^97[89]\d{10}$/.test(i)) return false; let t = 0; for (let k = 0; k < 12; k++) t += +i[k] * (k % 2 ? 3 : 1); return (10 - t % 10) % 10 === +i[12]; };
 const to13 = a => { const s = '978' + a.slice(0, 9); let t = 0; for (let k = 0; k < 12; k++) t += +s[k] * (k % 2 ? 3 : 1); return s + (10 - t % 10) % 10; };
@@ -203,15 +209,19 @@ async function panini(src) {
     await sleep(PAUSE);
   }
   if (!read) throw Error('mappa del sito Panini non raggiungibile' + why(B));
-  const todo = [...items.values()].filter(x => x.pub === 'panini' && stale(x)).sort(first('lastmod'));
+  // pv: versione della lettura della scheda; le schede lette con la versione vecchia (senza ISBN dai dati strutturati) si rileggono
+  const todo = [...items.values()].filter(x => x.pub === 'panini' && (stale(x) || (x.pv || 0) < 2)).sort(first('lastmod'));
+  let isb = 0, dat = 0;
   const det = await pool(todo, DETAILS, async x => {
     const h = await get(x.url.replace(R, B));
     if (h) {
+      x.pv = 2;
+      const ld = (String(h).match(/["'](?:releaseDate|datePublished)["']\s*:\s*["'](20\d{2}-\d{2}-\d{2})/) || [])[1];
       const t = strip(h), lab = t.match(/(?:data di uscita|in uscita il|uscita)\D{0,25}(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i);
       const og = meta(h, 'og:title'), h1 = (h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
       x.title = strip(og || h1 || '').replace(/\s*-\s*Panini Comics\s*$/i, '') || x.title;
-      x.date = (lab ? anyDate(lab[1]) : '') || x.date || '';
-      x.isbn = isbnIn(t) || x.isbn || ''; x.cover = ogImage(h, R) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
+      x.date = (lab ? anyDate(lab[1]) : '') || ld || x.date || ''; if (x.date) dat++;
+      x.isbn = isbnPage(h, t) || x.isbn || ''; if (x.isbn) isb++; x.cover = goodImg(ogImage(h, R)) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
       x.imprint = /planet manga/i.test(t) ? 'Planet Manga' : (x.imprint || '');
     }
     x.detailAt = today;
@@ -219,7 +229,7 @@ async function panini(src) {
   // copertina dal codice prodotto: /media/catalog/product/M/P/MPLSH123_0.jpg (controllo che l'immagine esista, senza scaricarla)
   const nocov = [...items.values()].filter(x => x.pub === 'panini' && !x.cover && (x.code || (x.url.match(/-([a-z0-9]+)-it\d+\.html$/) || [])[1]) && (!x.imgAt || age(x.imgAt) > 14)).sort((a, b) => (b.lastmod || '').localeCompare(a.lastmod || ''));
   let found = 0;
-  const img = await pool(nocov, +(process.env.PANINI_IMG || 2500), async x => {
+  const img = await pool(nocov, +(process.env.PANINI_IMG || 6000), async x => {
     const c = x.code || x.url.match(/-([a-z0-9]+)-it\d+\.html$/)[1], U = c.toUpperCase(), l = c.toLowerCase();
     for (const f of [`${U[0]}/${U[1]}/${U}_0.jpg`, `${l[0]}/${l[1]}/${l}_0.jpg`, `${U[0]}/${U[1]}/${U}_0_1.jpg`, `${l[0]}/${l[1]}/${l}_0_1.jpg`, `${l[0]}/${l[1]}/${l}_0_2.jpg`, `${U[0]}/${U[1]}/${U}_0_2.jpg`]) {
       const u = `/media/catalog/product/${f}`, r = await get(B + u, false, 'HEAD');
@@ -229,7 +239,7 @@ async function panini(src) {
     x.imgAt = today;
   });
   const miss = [...items.values()].filter(x => x.pub === 'panini' && !x.cover).length;
-  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
+  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette (ISBN in ${isb}, data in ${dat})${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
 }
 
 // ---------- SHOPIFY (J-POP, Edizioni BD, Goen, Musubi, Hollow Press…): /products.json ----------
@@ -247,6 +257,7 @@ async function shopify(src) {
     if (!j.products.length) break;
     for (const x of j.products) {
       // le parentesi senza numeri ("(BOX VOL. 1-3)", "(Regular)") non contano per il numero del volume
+      if (NOTBOOK.test(x.title + ' ' + (x.product_type || ''))) continue;
       const title = strip(x.title), v = volOf(title.replace(/\((?![\d\s]*(?:di\s*\d+\s*)?\))[^)]*\)/gi, ' ')); if (!v) continue;
       const tags = (Array.isArray(x.tags) ? x.tags : String(x.tags || '').split(',')).map(s => String(s).trim());
       const serie = tags.find(s => /^serie:/i.test(s));
@@ -273,6 +284,7 @@ async function woo(src) {
       for (const x of j) {
         const cats = [...(x.categories || []), ...(x.tags || [])].map(c => strip(c.name) + ' ' + c.slug).join(' ');
         if (src.cat && !src.cat.test(cats)) continue;
+        if (NOTBOOK.test(strip(x.name) + ' ' + cats)) continue;
         const title = strip(x.name), v = volOf(title); if (!v) continue;
         const attrs = (x.attributes || []).map(a => a.name + ': ' + (a.terms || []).map(t => t.name).join(', ')).join(' · ');
         const txt = strip(attrs + ' · ' + (x.short_description || '') + ' · ' + (x.description || ''));
@@ -346,6 +358,7 @@ async function html(src) {
       let fresh = 0;
       for (const f of listProducts(h, src, B)) {
         if (seen.has(f.url)) continue; seen.add(f.url); fresh++;
+        if (NOTBOOK.test(f.title)) continue;
         const sv = slugVol(f.url), v = volOf(f.title) || (sv && f.title ? { serie: f.title, number: sv } : null); if (!v) continue;
         const url = f.url.replace(B, R), o = items.get(url) || {}, date = labDate(f.text);
         put(src.k, { url, title: f.title + (volOf(f.title) ? '' : ' Vol. ' + sv), serie: v.serie, number: v.number, st: 0, nonum: 0, cover: f.cover || o.cover || '', isbn: isbnIn(f.url) || isbnIn(f.text) || o.isbn || '',
@@ -387,7 +400,7 @@ await Promise.all(SRC.filter(s => ONLY.includes(s.k)).map(async s => {
 fs.mkdirSync(DIR, { recursive: true });
 const pubs = {}; let tot = 0;
 for (const s of SRC) {
-  const list = [...items.values()].filter(x => x.pub === s.k && x.number != null).sort((a, b) => (b.date || b.seen || '').localeCompare(a.date || a.seen || ''))
+  const list = [...items.values()].filter(x => x.pub === s.k && x.number != null && !NOTBOOK.test(x.title || '')).sort((a, b) => (b.date || b.seen || '').localeCompare(a.date || a.seen || ''))
     .map(({ pub, ...x }) => x);
   const checked = [...items.values()].filter(x => x.pub === s.k && x.number == null && x.detailAt).map(x => [x.url, x.detailAt]);
   if (!list.length) { if (stats[s.k]) stats[s.k].count = 0; if (checked.length) fs.writeFileSync(`${DIR}/${s.k}.json`, JSON.stringify({ pub: s.k, name: s.name, items: [], checked }) + '\n'); continue; }
