@@ -296,7 +296,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v34 · 23/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v35 · 26/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -494,8 +494,12 @@ vols.push({isbn:isbn||'pub-'+s.key+'-'+x.number,title:s.name+' '+x.number,series
 if(lastRel>Math.max(s.top,lastOut[s.key]||0))lastOut[s.key]=lastRel;
 return{add,upd,lastRel,max:Math.max(0,...ps.items.map(x=>x.number))}}
 // copertina ufficiale di un volume dal sito dell'editore
-async function pubCover(series,num,pub,isbn){const fj=await scFeed(false,feedKeysFor([pub]));if(fj&&isbn){const i13=cleanIsbn(isbn),it=i13&&fj.items.find(x=>x.isbn==i13&&x.cover);if(it&&await tryImg(it.cover,false))return it.cover}if(!(num>0))return'';{const it=feedFind(fj,series,num,pub);if(it&&it.cover&&await tryImg(it.cover,false))return it.cover}if(!isStar(pub))return'';try{const slug=pubSlug[n(series)]||slugify(series),d=scVol((await getPage(`${SC}/fumetto/${slug}-${num}`)).html);
+async function pubCover(series,num,pub,isbn){const fj=await scFeed(false,feedKeysFor([pub]));if(fj&&isbn){const i13=cleanIsbn(isbn),it=i13&&fj.items.find(x=>x.isbn==i13&&x.cover);if(it&&await tryImg(it.cover,false))return it.cover}if(!(num>0))return'';{const c=await itemCover(feedFind(fj,series,num,pub));if(c)return c}if(!isStar(pub))return'';try{const slug=pubSlug[n(series)]||slugify(series),d=scVol((await getPage(`${SC}/fumetto/${slug}-${num}`)).html);
 if(d.cover&&await tryImg(d.cover,false))return d.cover}catch(e){}return''}
+// copertina Panini dal codice prodotto nell'indirizzo: …-mplsh123-it08.html → /media/catalog/product/M/P/MPLSH123_0.jpg
+const paniniImgs=u=>{const c=(String(u||'').match(/-([a-z0-9]+)-it\d+\.html$/)||[])[1];if(!c)return[];const U=c.toUpperCase(),l=c.toLowerCase(),b='https://www.panini.it/media/catalog/product/';
+return[`${U[0]}/${U[1]}/${U}_0.jpg`,`${l[0]}/${l[1]}/${l}_0.jpg`,`${l[0]}/${l[1]}/${l}_0_2.jpg`,`${U[0]}/${U[1]}/${U}_0_1.jpg`].map(f=>b+f)};
+async function itemCover(it){if(!it)return'';if(it.cover&&await tryImg(it.cover,false))return it.cover;for(const u of it.pub=='panini'?paniniImgs(it.url):[])if(await tryImg(u,false))return u;return''}
 // ==== elenco uscite degli editori, aggiornato ogni giorno da GitHub (uscite.json accanto a index.html) ====
 // editori letti dall'aggiornamento automatico: chiave → nome, come si riconosce nel campo Editore, file da leggere
 const PUBS={star:{n:'Star Comics',r:/star comics|edizioni star/i},panini:{n:'Panini',r:/panini|planet manga|planet comics|marvel italia/i},
@@ -931,8 +935,8 @@ toast(ok&&!idbFail?(v?'✅ Copertina della serie salvata'+(v.startsWith('idb:')?
 let acRun=false;
 async function autoCovers(force){if(acRun)return 0;acRun=true;let got=0;
 try{const now=Date.now(),REPL=/books\.google|googleusercontent|anilist\.co|myanimelist|openlibrary\.org/,
-L=vols.filter(v=>v.state!='hidden'&&!v.coverManual&&(!v.cover||(!String(v.cover).startsWith('idb:')&&REPL.test(v.cover)))&&(v.isbn10||realIsbn(v)||pubOf(v.publisher))&&(force||!v.ac2At||now-v.ac2At>7*864e5));
-const fj=await scFeed();for(const v of L){const it=(fj&&fj.items.find(x=>x.isbn==v.isbn&&x.cover))||feedFind(fj,v.series,v.number,v.publisher),u=(it&&it.cover&&await tryImg(it.cover,false)?it.cover:'')||await amazonCover(v.isbn10||'',v.isbn);v.ac2At=Date.now();if(u){v.cover=u;got++;render()}}if(L.length)persist()}
+L=vols.filter(v=>v.state!='hidden'&&!v.coverManual&&(!v.cover||(!String(v.cover).startsWith('idb:')&&REPL.test(v.cover)))&&(v.isbn10||realIsbn(v)||pubOf(v.publisher))&&(force||v.ac2v!==3||!v.ac2At||now-v.ac2At>7*864e5));
+const fj=await scFeed();for(const v of L){const it=(fj&&fj.items.find(x=>x.isbn==v.isbn&&x.cover))||feedFind(fj,v.series,v.number,v.publisher),u=await itemCover(it)||await amazonCover(v.isbn10||'',v.isbn);v.ac2At=Date.now();v.ac2v=3;if(u){v.cover=u;got++;render()}}if(L.length)persist()}
 finally{acRun=false}return got}
 // copia subito dall'elenco degli editori copertine e ISBN dei volumi da comprare (senza aspettare il controllo giornaliero)
 const gapCov={};
@@ -942,8 +946,18 @@ const it=(v.pubUrl&&byUrl.get(v.pubUrl))||(realIsbn(v)&&fj.items.find(x=>x.isbn=
 if(it.cover&&(!v.cover||(!own&&!String(v.cover).startsWith('idb:')&&v.cover!=it.cover&&!/media-amazon|images-amazon/.test(v.cover)))){v.cover=it.cover;ch++}
 if(isbnOk(it.isbn)&&!realIsbn(v)&&!vols.some(y=>y.isbn==it.isbn)){v.isbn=it.isbn;delete v.ac2At;ch++}
 if(!v.pubUrl){v.pubUrl=it.url;ch++}}
-for(const s of seriesList())if(pubOf(s.pub)&&s.gaps.length){const f=feedFor(s,fj);for(const g of s.gaps){const it=f.find(x=>x.number==g&&x.cover);if(it)gapCov[s.key+'|'+g]=it.cover}}
+for(const s of seriesList())if(pubOf(s.pub)&&s.gaps.length){const f=feedFor(s,fj);for(const g of s.gaps){const it=f.find(x=>x.number==g&&x.cover)||(pubOf(s.pub)=='panini'&&f.find(x=>x.number==g));if(it)gapCov[s.key+'|'+g]=it.cover||paniniImgs(it.url)[0]}}
 if(ch)persist();render();return ch}
+// ISBN mancante (volumi presi da «Nuove uscite» o inseriti a mano): lo cerco su Google Libri per serie + numero + editore
+const numOf=t=>{const m=String(t||'').match(/(?:\bvol(?:ume)?\.?|\bn[°º.]?|#|\()\s*0*(\d{1,4})\b/i)||String(t||'').match(/\s0*(\d{1,4})\s*\)?\s*$/);return m?+m[1]:null};
+let ibRun=false;
+async function isbnFill(max=8){if(ibRun)return 0;ibRun=true;let got=0;
+try{const now=Date.now(),L=vols.filter(v=>v.state!='hidden'&&!realIsbn(v)&&v.number!=null&&v.series&&(!v.ibAt||now-v.ibAt>7*864e5)).sort((a,b)=>(b.state=='owned')-(a.state=='owned')).slice(0,max);
+for(const v of L){v.ibAt=now;const w=tok(v.series).filter(x=>x.length>1).slice(0,4);if(!w.length)continue;const pk=pubOf(v.publisher),pn=pk?PUBS[pk].n.split(/[\s-]/)[0]:'';let r=[];
+try{r=await gb(w.map(x=>'intitle:'+x).join(' ')+' '+v.number+(pn?' inpublisher:'+pn:''),'it')}catch(e){break}
+const hit=r.find(b=>isbnOk(b.isbn)&&numOf(b.title)==v.number&&sameSeries(v.series,b.title)&&(edOf(b.title)||'')==(v.edition||'')&&!vols.some(y=>y.isbn==b.isbn));
+if(hit){v.isbn=hit.isbn;delete v.ac2v;got++;if(!v.cover){const u=await amazonCover(hit.isbn);if(u)v.cover=u}}await sleep(500)}
+if(L.length){persist();render()}}finally{ibRun=false}return got}
 const aiNote={};
 const isbnOk=i=>{i=String(i||'').replace(/[^0-9X]/gi,'');if(!/^97[89]\d{10}$/.test(i))return false;let t=0;for(let k=0;k<12;k++)t+=+i[k]*(k%2?3:1);return (10-t%10)%10==+i[12]};
 // ---- elimina un'intera serie (volumi, novità, copertina, impostazioni)
@@ -966,7 +980,7 @@ for(const c of [...gone.map(v=>String(v.cover||'')),String(sc||'')])if(c.startsW
 vols=keep;const ok=persist();saveScov();saveMeta();$('#dsDlg').close();dsKey=null;
 if(!$('#zoom').hidden){if(history.state&&history.state.z)history.back();else closeZoom()}
 render();toast(ok?`🗑 Serie eliminata (${gone.length} volumi)`:'⚠️ Eliminata solo fino alla chiusura della pagina',ok?2600:5000)};
-$('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
+$('#acB').onclick=async()=>{if(acRun){$('#acSt').textContent='Ricerca già in corso…';return}$('#acSt').textContent='⏳ Cerco… (qualche secondo per volume)';await isbnFill(30).catch(()=>0);const g=await autoCovers(true);$('#acSt').textContent=g?`✅ ${g} copertine trovate`:'Nessuna nuova copertina trovata (i volumi con ISBN 979 non hanno un codice Amazon ricavabile)'};
 // ==== Account e sincronizzazione (Supabase): ognuno ha la sua libreria privata, uguale su tutti i suoi dispositivi ====
 const hadLinkToken=location.hash.includes('access_token'),CFG=window.FUMETTECA_CONFIG||{},CL={url:String(CFG.supabaseUrl||'').trim().replace(/\/+$/,''),key:String(CFG.supabaseKey||'').trim()};
 let cfgWhy='';
@@ -1118,6 +1132,6 @@ const sheetDrag=d=>{dragClose(d,()=>{if(d.id=='dlg')resetDel();d.close()});d.add
 let zNoAnim=false;
 dragClose($('#zoom'),()=>{zNoAnim=true;if(history.state&&history.state.z)history.back();else closeZoom()},{grabSel:'.znav',after:()=>$('#zoom').classList.remove('dragging')});
 document.querySelectorAll('dialog.sheet').forEach(sheetDrag);
-render();$('#warn').hidden=probe();setTimeout(async()=>{await feedSync().catch(()=>{});autoCovers();await check('auto')},1500);
+render();$('#warn').hidden=probe();setTimeout(async()=>{await feedSync().catch(()=>{});await autoCovers();await check('auto');isbnFill().catch(()=>{})},1500);
 idb.all().then(o=>{for(const[k,v]of Object.entries(o)){try{if(typeof v=='string'&&v.startsWith('data:image/'))covers.set(k,v)}catch(e){}}render()}).catch(()=>{});
 </script></body></html>
