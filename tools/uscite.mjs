@@ -141,15 +141,16 @@ for (const s of SRC) {
 }
 const stats = old.stats || {}, state = old.state || {};
 const now = new Date(), today = now.toISOString().slice(0, 10);
-const put = (pub, e) => { const o = items.get(e.url) || { seen: today }; items.set(e.url, { ...o, ...e, pub }); };
-const dbg = { panini: [], dynit: [] };
+// ls = ultima volta che il volume era nel catalogo del sito (serve a togliere i prodotti spariti o scartati)
+const put = (pub, e) => { const o = items.get(e.url) || { seen: today }; items.set(e.url, { ...o, ...e, pub, ls: today }); };
+const dbg = { panini: [], paniniVuote: [], dynit: [] };
 const age = d => (Date.parse(today) - Date.parse(d)) / 864e5;
 // scheda da rileggere? mai letta; senza numero: ogni 60 giorni; con dati mancanti o uscita futura: ogni 6 giorni
 const stale = x => !x.detailAt || (x.nonum ? age(x.detailAt) > 60 : (!x.cover || !x.isbn || (!x.date && !x.nd) || x.date > today) && age(x.detailAt) > 6);
 const first = k => (a, b) => (!!a.cover - !!b.cover) || (b[k] || '').localeCompare(a[k] || '');
-async function pool(list, max, fn) {
-  let i = 0; const run = async () => { while (i < Math.min(list.length, max) && !late()) { const x = list[i++]; await fn(x); await sleep(PAUSE); } };
-  await Promise.all(Array.from({ length: CONC }, run)); return i;
+async function pool(list, max, fn, conc = CONC, pause = PAUSE) {
+  let i = 0; const run = async () => { while (i < Math.min(list.length, max) && !late()) { const x = list[i++]; await fn(x); await sleep(pause); } };
+  await Promise.all(Array.from({ length: conc }, run)); return i;
 }
 
 // ---------- STAR COMICS: pagine settimanali /uscite/AAAA-MM-GG + scheda del volume ----------
@@ -213,12 +214,17 @@ async function panini(src) {
   }
   if (!read) throw Error('mappa del sito Panini non raggiungibile' + why(B));
   // pv: versione della lettura della scheda; le schede lette con la versione vecchia (senza ISBN dai dati strutturati) si rileggono
-  const todo = [...items.values()].filter(x => x.pub === 'panini' && (stale(x) || (x.pv || 0) < 2)).sort(first('lastmod'));
-  let isb = 0, dat = 0;
-  const det = await pool(todo, DETAILS, async x => {
+  // prima i volumi senza data o ISBN, i più recenti per primi; una pagina alla volta, con calma (il sito blocca chi va veloce)
+  const todo = [...items.values()].filter(x => x.pub === 'panini' && (stale(x) || (x.pv || 0) < 3))
+    .sort((a, b) => (!!(a.date && a.isbn) - !!(b.date && b.isbn)) || (b.lastmod || '').localeCompare(a.lastmod || ''));
+  let isb = 0, dat = 0, ko = 0, empty = 0;
+  const det = await pool(todo, +(process.env.PANINI_DETAILS || 900), async x => {
     const h = await get(x.url.replace(R, B));
+    if (!h) ko++;
+    else if (!/data di uscita|isbn/i.test(h)) { empty++; if (dbg.paniniVuote.length < 3) dbg.paniniVuote.push({ url: x.url, bytes: h.length, title: strip((h.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || ''), testo: strip(h).slice(0, 600) }); }
+    if (h && !/data di uscita|isbn/i.test(h)) { x.detailAt = today; x.pv = 3; return; }
     if (h) {
-      x.pv = 2;
+      x.pv = 3;
       const ld = (String(h).match(/["'](?:releaseDate|datePublished)["']\s*:\s*["'](20\d{2}-\d{2}-\d{2})/) || [])[1];
       const t = strip(h), lab = t.match(/(?:data di uscita|in uscita il|uscita)\D{0,25}(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i);
       const og = meta(h, 'og:title'), h1 = (h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
@@ -227,11 +233,11 @@ async function panini(src) {
       if (dbg.panini.length < 3) dbg.panini.push({ url: x.url, bytes: h.length, title: strip((h.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || ''), og: meta(h, 'og:title'), ogImage: meta(h, 'og:image'),
         ldjson: ((h.match(/<script[^>]+ld\+json[^>]*>([\s\S]*?)<\/script>/i) || [])[1] || '').slice(0, 1500),
         near: [...t.matchAll(/(?:uscita|disponibil|isbn|ean|pagine|codice|formato)/gi)].slice(0, 12).map(m => t.slice(Math.max(0, m.index - 40), m.index + 80)) });
-      x.isbn = isbnPage(h, t) || x.isbn || ''; if (x.isbn) isb++; x.cover = goodImg(ogImage(h, R)) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
+      x.isbn = isbnPage(h, t) || x.isbn || ''; if (x.isbn) isb++; x.cover = x.cover || goodImg(ogImage(h, R).split('?')[0]); x.pages = pagesIn(t) || x.pages || 0;
       x.imprint = /planet manga/i.test(t) ? 'Planet Manga' : (x.imprint || '');
     }
     x.detailAt = today;
-  });
+  }, +(process.env.PANINI_CONC || 1), +(process.env.PANINI_PAUSE ?? 1200));
   // copertina dal codice prodotto: /media/catalog/product/M/P/MPLSH123_0.jpg (controllo che l'immagine esista, senza scaricarla)
   const nocov = [...items.values()].filter(x => x.pub === 'panini' && !x.cover && (x.code || (x.url.match(/-([a-z0-9]+)-it\d+\.html$/) || [])[1]) && (!x.imgAt || age(x.imgAt) > 14)).sort((a, b) => (b.lastmod || '').localeCompare(a.lastmod || ''));
   let found = 0;
@@ -245,7 +251,7 @@ async function panini(src) {
     x.imgAt = today;
   });
   const miss = [...items.values()].filter(x => x.pub === 'panini' && !x.cover).length;
-  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette (ISBN in ${isb}, data in ${dat})${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
+  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette (ISBN in ${isb}, data in ${dat}${ko ? `, ${ko} non lette${why(B)}` : ''}${empty ? `, ${empty} senza dati` : ''})${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
 }
 
 // ---------- SHOPIFY (J-POP, Edizioni BD, Goen, Musubi, Hollow Press…): /products.json ----------
@@ -350,7 +356,7 @@ async function productMaps(src, B, R) {
       let u; try { u = new URL(ent(loc)); } catch (e) { continue; }
       if (!src.prod.test(u.pathname)) continue;
       const url = R + u.pathname, lastmod = ((b[1].match(/<lastmod>([^<]+)<\/lastmod>/) || [])[1] || '').slice(0, 10), o = items.get(url);
-      if (o) { if (lastmod) o.lastmod = lastmod; continue; }
+      if (o) { if (lastmod) o.lastmod = lastmod; o.ls = today; continue; }
       const t = slugTitle(url), v = volOf(t) || (slugVol(url) ? { serie: t.replace(/\s*vol(?:ume)?\s*\d+.*$/i, ''), number: slugVol(url) } : null);
       put(src.k, { url, title: t, serie: v ? v.serie : '', number: v ? v.number : null, st: 1, lastmod, nd: 1, cover: '', isbn: isbnIn(url) }); n++;
     }
@@ -409,6 +415,8 @@ await Promise.all(SRC.filter(s => ONLY.includes(s.k)).map(async s => {
 fs.mkdirSync(DIR, { recursive: true });
 const pubs = {}; let tot = 0;
 for (const s of SRC) {
+  if (s.type && stats[s.k] && stats[s.k].ok && stats[s.k].at > new Date(T0).toISOString())
+    for (const [u, x] of items) if (x.pub === s.k && (!x.ls || age(x.ls) > 7)) items.delete(u);
   const list = [...items.values()].filter(x => x.pub === s.k && x.number != null && !NOTBOOK.test(x.title || '')).sort((a, b) => (b.date || b.seen || '').localeCompare(a.date || a.seen || ''))
     .map(({ pub, ...x }) => x);
   const checked = [...items.values()].filter(x => x.pub === s.k && x.number == null && x.detailAt).map(x => [x.url, x.detailAt]);
