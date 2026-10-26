@@ -30,7 +30,7 @@ const SRC = [
   { k: 'magic', name: 'Magic Press', site: 'https://b2c.magicpressedizioni.it', type: 'html', list: ['/43-manga?page={n}', '/12-801-yaoi?page={n}', '/13-mx?page={n}', '/55-edizioni-limitate?page={n}'], preList: ['/module/preorder/allpreorderdetails'], prod: /^\/(?:[a-z0-9-]+\/)?\d+-[a-z0-9-]+\.html$/, maxPages: 150 },
   { k: 'nipponshock', name: 'Nippon Shock Edizioni', site: 'https://www.nipponshock.com', type: 'html', list: ['/shop/manga'], prod: /^\/shop\/[a-z0-9-]+$/ },
   { k: 'dokusho', name: 'Dokusho Edizioni', site: 'https://dokusho.it', type: 'woo', list: ['/index.php/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
-  { k: 'dynit', name: 'Dynit', site: 'https://www.dynit.it', type: 'woo', cat: /manga/i, list: ['/prodotti/manga/page/{n}/'], prod: /\/prodott[oi]\/[^/]+\/?$/ },
+  { k: 'dynit', name: 'Dynit', site: 'https://www.dynit.it', type: 'woo', cat: /manga/i, brand: /dynit/i, list: ['/prodotti/manga/page/{n}/'], prod: /\/prodott[oi]\/[^/]+\/?$/ },
   { k: 'hikari', name: 'Hikari Edizioni', site: 'https://hikariedizioni.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/prodotto\/[^/]+\/?$/ },
   { k: 'e001', name: '001 Edizioni', site: 'https://www.001edizioni.com', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/ },
   { k: 'ishi', name: 'Ishi Publishing', site: 'https://ishipublishing.it', type: 'woo', list: ['/shop/page/{n}/'], prod: /\/(?:prodotto|product)\/[^/]+\/?$/ },
@@ -93,10 +93,12 @@ const p2 = x => String(x).padStart(2, '0');
 function anyDate(t) {
   let m = t.match(/\b(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})\b/); if (m) return `${m[3]}-${p2(m[2])}-${p2(m[1])}`;
   m = t.match(/\b(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s+(\d{4})\b/i); if (m) return `${m[3]}-${p2(MESI[m[2].toLowerCase()])}-${p2(m[1])}`;
+  m = t.match(/\b(\d{1,2})\s+(gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)\.?\s+(\d{4})\b/i); if (m) return `${m[3]}-${p2(Object.keys(MESI).findIndex(k => k.startsWith(m[2].toLowerCase())) + 1)}-${p2(m[1])}`;
+  m = t.match(/\b(\d{1,2})[\/.](\d{1,2})[\/.](\d{2})\b/); if (m) return `20${m[3]}-${p2(m[2])}-${p2(m[1])}`;
   m = t.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/); return m ? m[0] : '';
 }
 // una data vale solo se è preceduta da un'etichetta di uscita (le pagine sono piene di altre date)
-const DLAB = /(?:data di uscita|data d'uscita|data uscita|in uscita (?:il|dal)|uscita prevista|disponibile dal|data di pubblicazione|release date|uscita)\s*:?\s*\D{0,20}?(\d{1,2}[\/.]\d{1,2}[\/.]\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i;
+const DLAB = /(?:data di uscita|data d'uscita|data uscita|in uscita (?:il|dal)|uscita prevista|disponibile dal|data di pubblicazione|release date|uscita)\s*:?\s*\D{0,20}?(\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}|\d{1,2}\s+[a-z]+\.?\s+\d{4}|20\d{2}-\d{2}-\d{2})/i;
 const labDate = t => { const m = String(t).match(DLAB); return m ? anyDate(m[1]) : ''; };
 // ISBN dai dati strutturati della pagina (JSON-LD, microdati) o da un'etichetta ISBN/EAN; poi qualunque ISBN valido nel testo
 const isbnPage = (h, t) => { const m = String(h).match(/["'](?:gtin13|gtin|isbn|ean)["']\s*:\s*["']?(97[89][\d-]{10,16})/i) || String(h).match(/itemprop=["'](?:isbn|gtin13)["'][^>]*content=["'](97[89][\d-]{10,16})/i) || String(t).match(/(?:isbn|ean|codice a barre)(?:\s*-?13)?\s*:?\s*(97[89][\d -]{10,18})/i);
@@ -140,6 +142,7 @@ for (const s of SRC) {
 const stats = old.stats || {}, state = old.state || {};
 const now = new Date(), today = now.toISOString().slice(0, 10);
 const put = (pub, e) => { const o = items.get(e.url) || { seen: today }; items.set(e.url, { ...o, ...e, pub }); };
+const dbg = { panini: [], dynit: [] };
 const age = d => (Date.parse(today) - Date.parse(d)) / 864e5;
 // scheda da rileggere? mai letta; senza numero: ogni 60 giorni; con dati mancanti o uscita futura: ogni 6 giorni
 const stale = x => !x.detailAt || (x.nonum ? age(x.detailAt) > 60 : (!x.cover || !x.isbn || (!x.date && !x.nd) || x.date > today) && age(x.detailAt) > 6);
@@ -220,7 +223,10 @@ async function panini(src) {
       const t = strip(h), lab = t.match(/(?:data di uscita|in uscita il|uscita)\D{0,25}(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[a-z]+\s+\d{4}|20\d{2}-\d{2}-\d{2})/i);
       const og = meta(h, 'og:title'), h1 = (h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
       x.title = strip(og || h1 || '').replace(/\s*-\s*Panini Comics\s*$/i, '') || x.title;
-      x.date = (lab ? anyDate(lab[1]) : '') || ld || x.date || ''; if (x.date) dat++;
+      x.date = (lab ? anyDate(lab[1]) : '') || labDate(t) || ld || x.date || ''; if (x.date) dat++;
+      if (dbg.panini.length < 3) dbg.panini.push({ url: x.url, bytes: h.length, title: strip((h.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || ''), og: meta(h, 'og:title'), ogImage: meta(h, 'og:image'),
+        ldjson: ((h.match(/<script[^>]+ld\+json[^>]*>([\s\S]*?)<\/script>/i) || [])[1] || '').slice(0, 1500),
+        near: [...t.matchAll(/(?:uscita|disponibil|isbn|ean|pagine|codice|formato)/gi)].slice(0, 12).map(m => t.slice(Math.max(0, m.index - 40), m.index + 80)) });
       x.isbn = isbnPage(h, t) || x.isbn || ''; if (x.isbn) isb++; x.cover = goodImg(ogImage(h, R)) || x.cover || ''; x.pages = pagesIn(t) || x.pages || 0;
       x.imprint = /planet manga/i.test(t) ? 'Planet Manga' : (x.imprint || '');
     }
@@ -283,10 +289,13 @@ async function woo(src) {
       if (!Array.isArray(j)) break; api = 1; if (!j.length) break;
       for (const x of j) {
         const cats = [...(x.categories || []), ...(x.tags || [])].map(c => strip(c.name) + ' ' + c.slug).join(' ');
+        if (dbg[src.k] && dbg[src.k].length < 25 && Math.random() < 0.05) dbg[src.k].push({ name: x.name, cats, attrs: (x.attributes || []).map(a => a.name + ': ' + (a.terms || []).map(t => t.name).join(', ')).join(' · '), brands: (x.brands || []).map(b => b.name).join(', ') });
         if (src.cat && !src.cat.test(cats)) continue;
         if (NOTBOOK.test(strip(x.name) + ' ' + cats)) continue;
         const title = strip(x.name), v = volOf(title); if (!v) continue;
         const attrs = (x.attributes || []).map(a => a.name + ': ' + (a.terms || []).map(t => t.name).join(', ')).join(' · ');
+        const ed = [...(x.attributes || []).filter(a => /editor|publisher|marca|brand|casa/i.test(a.name)).flatMap(a => (a.terms || []).map(t => t.name)), ...(x.brands || []).map(b => b.name)].join(' ');
+        if (src.brand && ed && !src.brand.test(ed)) continue;
         const txt = strip(attrs + ' · ' + (x.short_description || '') + ' · ' + (x.description || ''));
         const date = labDate(txt), st = [x.add_to_cart && x.add_to_cart.text, x.stock_availability && x.stock_availability.text, cats].join(' ');
         put(src.k, { url: String(x.permalink || '').replace(B, R), title, serie: v.serie, number: v.number, isbn: cleanIsbn(x.sku) || isbnIn(txt),
@@ -410,6 +419,7 @@ for (const s of SRC) {
   if (stats[s.k]) stats[s.k].count = list.length;
   tot += list.length;
 }
+fs.writeFileSync(`${DIR}/diagnostica.json`, JSON.stringify({ updated: new Date().toISOString(), ...dbg }, null, 1) + '\n');
 fs.writeFileSync(OUT, JSON.stringify({ version: 2, updated: new Date().toISOString(), stats, state, pubs }) + '\n');
 console.log(`Totale voci: ${tot} (${Object.keys(pubs).length} editori con volumi)`);
 if (Object.values(stats).every(s => !s.ok)) process.exit(1);
