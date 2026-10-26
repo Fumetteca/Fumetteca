@@ -49,10 +49,32 @@ const ONLY = (process.env.ONLY || SRC.map(s => s.k).join(',')).split(',');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const HEAD = { 'user-agent': 'Mozilla/5.0 (compatible; Fumetteca personal release checker; +https://github.com)', 'accept-language': 'it-IT,it;q=0.9' };
 const lastErr = new Map(), host = u => { try { return new URL(u).host; } catch (e) { return ''; } };
-async function get(u, json) {
+// robots.txt: rispetto le regole per tutti i programmi (User-agent: *) o per "fumetteca"; le pagine vietate non le leggo
+const robotsC = new Map(), blocked = new Map();
+function parseRobots(txt) {
+  const groups = []; let cur = null, inRules = false;
+  for (const line of String(txt || '').split(/\r?\n/)) {
+    const m = line.replace(/#.*/, '').match(/^\s*([a-z-]+)\s*:\s*(.*?)\s*$/i); if (!m) continue;
+    const k = m[1].toLowerCase(), v = m[2];
+    if (k === 'user-agent') { if (!cur || inRules) { cur = { agents: [], rules: [] }; groups.push(cur); inRules = false; } cur.agents.push(v.toLowerCase()); }
+    else if ((k === 'allow' || k === 'disallow') && cur) { inRules = true; if (v) cur.rules.push({ allow: k === 'allow', len: v.length, re: new RegExp('^' + v.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\\\$$/, '$')) }); }
+  }
+  const mine = groups.filter(g => g.agents.some(a => a.includes('fumetteca')));
+  return (mine.length ? mine : groups.filter(g => g.agents.includes('*'))).flatMap(g => g.rules);
+}
+async function allowed(u) {
+  const U = new URL(u); if (U.pathname === '/robots.txt') return true;
+  if (!robotsC.has(U.origin)) robotsC.set(U.origin, fetch(U.origin + '/robots.txt', { headers: HEAD, signal: AbortSignal.timeout(20000) }).then(r => r.ok ? r.text() : '').catch(() => '').then(parseRobots));
+  const rules = await robotsC.get(U.origin), path = U.pathname + U.search; let best = null;
+  for (const r of rules) if (r.re.test(path) && (!best || r.len > best.len || (r.len === best.len && r.allow))) best = r;
+  return !best || best.allow;
+}
+async function get(u, json, method) {
+  if (!(await allowed(u))) { blocked.set(host(u), (blocked.get(host(u)) || 0) + 1); lastErr.set(host(u), 'vietato da robots.txt'); return null; }
   for (let t = 0; t < 3; t++) {
     try {
-      const r = await fetch(u, { headers: json ? { ...HEAD, accept: 'application/json' } : HEAD, signal: AbortSignal.timeout(30000) });
+      const r = await fetch(u, { method: method || 'GET', headers: json ? { ...HEAD, accept: 'application/json' } : HEAD, signal: AbortSignal.timeout(30000) });
+      if (method === 'HEAD') return r.ok && /^image\//.test(r.headers.get('content-type') || '') ? 'ok' : r.status === 405 ? 'no-head' : null;
       if (r.ok) { const x = await r.text(); if (!json) return x; try { return JSON.parse(x); } catch (e) { return null; } }
       lastErr.set(host(u), 'HTTP ' + r.status);
       if ([401, 403, 404, 410].includes(r.status)) return null;
@@ -62,6 +84,7 @@ async function get(u, json) {
   return null;
 }
 const why = B => lastErr.get(host(B)) ? ` (${lastErr.get(host(B))})` : '';
+const robo = B => blocked.get(host(B)) ? `, ${blocked.get(host(B))} pagine saltate perché vietate da robots.txt` : '';
 const ENT = { nbsp: ' ', amp: '&', quot: '"', apos: "'", rsquo: "'", lsquo: "'", ldquo: '"', rdquo: '"', ndash: '–', mdash: '—', hellip: '…', egrave: 'è', eacute: 'é', agrave: 'à', ograve: 'ò', ugrave: 'ù', igrave: 'ì', deg: '°', ordm: 'º' };
 const ent = s => String(s || '').replace(/&#x([0-9a-f]+);/gi, (m, c) => String.fromCodePoint(parseInt(c, 16))).replace(/&#(\d+);/g, (m, c) => String.fromCodePoint(+c)).replace(/&([a-z]+);/gi, (m, c) => ENT[c.toLowerCase()] ?? m);
 const strip = h => ent(String(h || '').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
@@ -152,7 +175,7 @@ async function star(src) {
   });
   const left = [...items.values()].filter(x => x.pub === 'star' && !x.cover).length;
   if (!fetched && failed) throw Error('starcomics.com non raggiungibile' + why(B));
-  return `${fetched} settimane lette, ${det} schede` + (left ? `, ${left} ancora senza copertina` : ', tutte con copertina');
+  return `${fetched} settimane lette, ${det} schede${robo(B)}` + (left ? `, ${left} ancora senza copertina` : ', tutte con copertina');
 }
 
 // ---------- PANINI: mappe del sito (manga + quelle dei fumetti dichiarate in robots.txt) + pagina prodotto ----------
@@ -167,12 +190,14 @@ async function panini(src) {
   let n = 0, read = 0;
   for (const mp of maps) {
     const sm = await get(B + mp); if (!sm) continue; read++;
-    for (const m of sm.matchAll(/<url>\s*<loc>([^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?/g)) {
+    for (const b of sm.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+      const m = [, (b[1].match(/<loc>\s*([^<]+?)\s*<\/loc>/) || [])[1], (b[1].match(/<lastmod>([^<]+)<\/lastmod>/) || [])[1]], img = (b[1].match(/<image:loc>\s*([^<]+?)\s*<\/image:loc>/) || [])[1];
+      if (!m[1]) continue;
       const url = m[1].trim().replace(/^https?:\/\/[^/]+/, R), slug = (url.match(/\/shp_ita_it\/([a-z0-9-]+)\.html$/) || [])[1]; if (!slug) continue;
       const parts = slug.split('-'); if (parts.length < 4 || !/^it\d+$/.test(parts.at(-1))) continue;
       const num = /^\d{1,4}$/.test(parts.at(-3)) ? +parts.at(-3) : null; if (num == null) continue;
       const o = items.get(url) || {};
-      put('panini', { url, title: o.title || parts.slice(0, -3).join(' ') + ' ' + num, slugTitle: parts.slice(0, -3).join(' '), number: num, lastmod: (m[2] || '').slice(0, 10) });
+      put('panini', { url, title: o.title || parts.slice(0, -3).join(' ') + ' ' + num, slugTitle: parts.slice(0, -3).join(' '), number: num, lastmod: (m[2] || '').slice(0, 10), code: parts.at(-2), ...(img && !o.cover ? { cover: ent(img).replace(/^https?:\/\/[^/]+/, R) } : {}) });
       n++;
     }
     await sleep(PAUSE);
@@ -191,7 +216,20 @@ async function panini(src) {
     }
     x.detailAt = today;
   });
-  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette`;
+  // copertina dal codice prodotto: /media/catalog/product/M/P/MPLSH123_0.jpg (controllo che l'immagine esista, senza scaricarla)
+  const nocov = [...items.values()].filter(x => x.pub === 'panini' && !x.cover && (x.code || (x.url.match(/-([a-z0-9]+)-it\d+\.html$/) || [])[1]) && (!x.imgAt || age(x.imgAt) > 14)).sort((a, b) => (b.lastmod || '').localeCompare(a.lastmod || ''));
+  let found = 0;
+  const img = await pool(nocov, +(process.env.PANINI_IMG || 2500), async x => {
+    const c = x.code || x.url.match(/-([a-z0-9]+)-it\d+\.html$/)[1], U = c.toUpperCase(), l = c.toLowerCase();
+    for (const f of [`${U[0]}/${U[1]}/${U}_0.jpg`, `${l[0]}/${l[1]}/${l}_0.jpg`, `${U[0]}/${U[1]}/${U}_0_1.jpg`, `${l[0]}/${l[1]}/${l}_0_1.jpg`, `${l[0]}/${l[1]}/${l}_0_2.jpg`, `${U[0]}/${U[1]}/${U}_0_2.jpg`]) {
+      const u = `/media/catalog/product/${f}`, r = await get(B + u, false, 'HEAD');
+      if (r === 'ok') { x.cover = R + u; found++; break; }
+      if (r === 'no-head') break;
+    }
+    x.imgAt = today;
+  });
+  const miss = [...items.values()].filter(x => x.pub === 'panini' && !x.cover).length;
+  return `${n} volumi in ${read} ${read == 1 ? 'mappa' : 'mappe'}, ${det} schede lette${robo(B)}, ${found} copertine trovate dal codice (${img} provate), ${miss} ancora senza copertina`;
 }
 
 // ---------- SHOPIFY (J-POP, Edizioni BD, Goen, Musubi, Hollow Press…): /products.json ----------
@@ -336,7 +374,7 @@ async function html(src) {
     x.detailAt = today;
   });
   const tot = [...items.values()].filter(x => x.pub === src.k && x.number != null).length;
-  return `${tot} volumi a catalogo (${pages} pagine del negozio${mp.read ? `, ${mp.n} nuovi dalla mappa del sito` : ''}), ${det} schede lette`;
+  return `${tot} volumi a catalogo (${pages} pagine del negozio${mp.read ? `, ${mp.n} nuovi dalla mappa del sito` : ''}), ${det} schede lette${robo(B)}`;
 }
 
 // ---------- via: tutti gli editori in parallelo (ognuno con le sue pause, siti diversi) ----------
