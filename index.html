@@ -296,7 +296,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v35 · 26/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v36 · 26/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -486,7 +486,7 @@ for(let p=2;p<=Math.min(lst.last,10)&&Math.min(...items.map(x=>x.number))>need;p
 return{ok:true,slug,items,via}}
 async function pubApply(s,ps){const owned=new Set(s.own.map(v=>v.number)),sk=new Set(skip[s.key]||[]),t=today();let add=0,upd=0,lastRel=0;
 for(const x of ps.items)if(!x.ann&&(x.date?x.date<=t:x.nd))lastRel=Math.max(lastRel,x.number);
-const want=ps.items.filter(x=>!owned.has(x.number)&&!sk.has(x.number)&&(x.number>s.top||s.gaps.includes(x.number))).sort((a,b)=>a.number-b.number).slice(0,15);
+const want=ps.items.filter(x=>!owned.has(x.number)&&!sk.has(x.number)&&(x.number>s.top||s.gaps.includes(x.number))&&x.number<=Math.max(s.top,s.known||0)+30).sort((a,b)=>a.number-b.number).slice(0,15);
 for(const x of want){let det={isbn:x.isbn||'',cover:x.cover||'',pages:x.pages||0};if(!x.feed){try{det=scVol((await getPage(x.url)).html)}catch(e){}}
 const date=x.date||det.date||'',isbn=det.isbn||'';let v=vols.find(y=>y.state!='owned'&&n(y.series)==s.key&&y.number==x.number)||(isbn&&vols.find(y=>y.isbn==isbn));
 if(v){if(v.state=='owned')continue;if(isbn&&!realIsbn(v)&&!vols.some(y=>y.isbn==isbn))v.isbn=isbn;if(date){v.date=date;v.ann=0}else if(x.ann)v.ann=1;if(det.cover&&!v.coverManual)v.cover=det.cover;v.pubUrl=x.url;upd++;continue}
@@ -509,15 +509,17 @@ nipponshock:{n:'Nippon Shock',r:/nippon ?shock/i},goen:{n:'Goen',r:/\bgoen\b|\br
 bonelli:{n:'Bonelli',r:/bonelli/i},cosmo:{n:'Editoriale Cosmo',r:/(?:editoriale|edizioni) cosmo|cosmo editoriale/i},npe:{n:'Edizioni NPE',r:/\bnpe\b|nicola pesce/i},shockdom:{n:'Shockdom',r:/shockdom/i},
 tunue:{n:'Tunué',r:/tunu[eé]/i},coconino:{n:'Coconino Press',r:/coconino/i},bao:{n:'BAO Publishing',r:/\bbao\b/i}};
 const PUBN=Object.fromEntries(Object.entries(PUBS).map(([k,v])=>[k,v.n]));PUBN.bd='Edizioni BD';
-const pubOf=p=>{p=String(p||'');for(const[k,v]of Object.entries(PUBS))if(v.r.test(p))return k;return''};
-const pubIn=(xp,pk)=>(PUBS[pk]&&PUBS[pk].f||[pk]).includes(xp);
+// editori in più trovati dall'aggiornamento automatico (es. venduti da Dynit: Sprea, Hoshi, Gaijin…): si riconoscono dal nome
+const DYN=[],GENW=new Set('edizioni edizione editore editori editrice edition editions publishing publisher comics comic srl spa casa'.split(' '));
+const pubOf=p=>{p=String(p||'');for(const[k,v]of Object.entries(PUBS))if(v.r.test(p))return k;const t=new Set(tok(p));for(const[k,w]of DYN)if(w.length&&w.every(x=>t.has(x)))return k;return''};
+const pubIn=(xp,pk)=>((PUBS[pk]&&PUBS[pk].f)||[pk]).includes(xp);
 // elenco uscite: uscite.json è l'indice, ogni editore ha il suo file in uscite/; scarico solo quelli che servono
 let feedC=null,feedIdx=null;const feedFiles={};
 async function feedIndex(force){if(feedIdx!==null&&!force)return feedIdx;feedIdx=null;
 for(const f of ['uscite.json','uscite-starcomics.json']){try{const r=await tfetch(f+'?t='+Math.floor(Date.now()/6e4),8000);if(r.ok){const j=await r.json();
-if(j&&j.pubs){if(force)for(const k in feedFiles)delete feedFiles[k];return feedIdx=j}
+if(j&&j.pubs){if(force)for(const k in feedFiles)delete feedFiles[k];DYN.length=0;for(const[k,v]of Object.entries(j.pubs))if(!PUBS[k]){PUBN[k]=v.name;DYN.push([k,tok(v.name).filter(w=>!GENW.has(w))])}return feedIdx=j}
 if(Array.isArray(j.items)){j.items.forEach(x=>x.pub=x.pub||'star');return feedIdx=j}}}catch(e){}}return feedIdx=false}
-const feedKeysFor=pubs=>[...new Set(pubs.map(pubOf).filter(Boolean).flatMap(k=>PUBS[k].f||[k]))];
+const feedKeysFor=pubs=>[...new Set(pubs.map(pubOf).filter(Boolean).flatMap(k=>(PUBS[k]&&PUBS[k].f)||[k]))];
 async function scFeed(force,want){const ix=await feedIndex(force);if(!ix)return feedC=false;if(!ix.pubs)return feedC=ix;
 const keys=[...new Set([...feedKeysFor(vols.map(v=>v.publisher)),...(want||[])])].filter(k=>ix.pubs[k]);let ch=!feedC||force;
 await Promise.all(keys.filter(k=>!feedFiles[k]).map(async k=>{try{const r=await tfetch(ix.pubs[k].file+'?t='+Math.floor(Date.now()/6e4),15000);if(r.ok){const j=await r.json();feedFiles[k]=(j.items||[]).map(x=>({...x,pub:k}));ch=true}}catch(e){}}));
@@ -546,7 +548,7 @@ let checking=false;
 async function check(only){if(checking)return;checking=true;const st=m=>document.querySelectorAll('.chkst').forEach(e=>e.textContent=m);let found=0;
 try{const auto=only=='auto',L=seriesList().filter(s=>s.top>0&&(auto?(!chkAt[s.key]||Date.now()-chkAt[s.key]>864e5):(!only||s.key==only)));if(auto&&!L.length)return;if(!only||auto)$('#chklog').innerHTML='';let i=0;
 for(const s of L){st(`${auto?'Controllo automatico':'Controllo'} ${++i}/${L.length}: ${s.name}…`);
-const pk=pubOf(s.pub);if(pk){try{const fj=await scFeed(),fi=fj?feedFor(s,fj):[];const ps=fi.length?{ok:true,items:fi,via:'elenco aggiornato da GitHub '+ago(Date.parse(fj.updated)),slug:pubSlug[s.key]||((fi[0].url.match(/\/fumetto\/([a-z0-9-]+?)-\d+/)||[])[1])||slugify(s.name)}:pk=='star'?await scSeries(s):{ok:false,msg:!fj?'elenco uscite non ancora attivo su GitHub':fj.pubs&&!(PUBS[pk].f||[pk]).some(k=>fj.pubs[k])?'il sito di questo editore non è ancora nell\'elenco (l\'aggiornamento automatico non l\'ha letto)':'nessun volume di questa serie nell\'elenco (controlla che il nome della serie sia come sul sito)'};if(ps.ok){const r=await pubApply(s,ps);found+=r.add;chkAt[s.key]=Date.now();
+const pk=pubOf(s.pub);if(pk){try{const fj=await scFeed(),fi=fj?feedFor(s,fj):[];const ps=fi.length?{ok:true,items:fi,via:'elenco aggiornato da GitHub '+ago(Date.parse(fj.updated)),slug:pubSlug[s.key]||((fi[0].url.match(/\/fumetto\/([a-z0-9-]+?)-\d+/)||[])[1])||slugify(s.name)}:pk=='star'?await scSeries(s):{ok:false,msg:!fj?'elenco uscite non ancora attivo su GitHub':fj.pubs&&!((PUBS[pk]&&PUBS[pk].f)||[pk]).some(k=>fj.pubs[k])?'il sito di questo editore non è ancora nell\'elenco (l\'aggiornamento automatico non l\'ha letto)':'nessun volume di questa serie nell\'elenco (controlla che il nome della serie sia come sul sito)'};if(ps.ok){const r=await pubApply(s,ps);found+=r.add;chkAt[s.key]=Date.now();
 aiNote[s.key]=`<b>Sito ${PUBN[pk]}</b> (${esc(ps.via)}): ultimo uscito n. ${r.lastRel||'?'}${r.max>r.lastRel?', annunciato fino al n. '+r.max:''} · ${r.add?r.add+' nuovi':'nessun volume nuovo'}`;
 $('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b> (${esc(s.pub)}): <b>sito ufficiale ${PUBN[pk]}</b> (${esc(ps.via)}) · in collezione fino al ${s.top} · ultimo uscito n. ${r.lastRel||'?'}${r.max>r.lastRel?' · annunciato fino al n. '+r.max:''}${r.add?' · '+r.add+' nuovi':''}${r.upd?' · '+r.upd+' aggiornati':''} · <a target="_blank" rel="noopener" href="${esc(pk=='star'?SC+'/titoli-fumetti/'+ps.slug:[...ps.items].sort((a,b)=>b.number-a.number)[0].url)}">${pk=='star'?'apri la collana':'apri sul sito'}</a></div>`;await sleep(250);continue}
 else{aiNote[s.key]='⚠️ Sito '+PUBN[pk]+': '+esc(ps.msg)+'. Ho usato i cataloghi.';$('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b>: sito ${PUBN[pk]}: ${esc(ps.msg)} → uso i cataloghi</div>`}}catch(e){aiNote[s.key]='⚠️ Sito '+PUBN[pk]+' non letto ('+esc(e.message)+'). Ho usato i cataloghi, che spesso non hanno ancora i volumi recenti. Per una lettura affidabile attiva l\'aggiornamento automatico su GitHub (menu •••).';$('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b>: sito ${PUBN[pk]} non letto (${esc(e.message)}) → uso i cataloghi</div>`}}
@@ -953,7 +955,7 @@ const numOf=t=>{const m=String(t||'').match(/(?:\bvol(?:ume)?\.?|\bn[°º.]?|#|\
 let ibRun=false;
 async function isbnFill(max=8){if(ibRun)return 0;ibRun=true;let got=0;
 try{const now=Date.now(),L=vols.filter(v=>v.state!='hidden'&&!realIsbn(v)&&v.number!=null&&v.series&&(!v.ibAt||now-v.ibAt>7*864e5)).sort((a,b)=>(b.state=='owned')-(a.state=='owned')).slice(0,max);
-for(const v of L){v.ibAt=now;const w=tok(v.series).filter(x=>x.length>1).slice(0,4);if(!w.length)continue;const pk=pubOf(v.publisher),pn=pk?PUBS[pk].n.split(/[\s-]/)[0]:'';let r=[];
+for(const v of L){v.ibAt=now;const w=tok(v.series).filter(x=>x.length>1).slice(0,4);if(!w.length)continue;const pk=pubOf(v.publisher),pn=pk?(PUBN[pk]||'').split(/[\s-]/)[0]:'';let r=[];
 try{r=await gb(w.map(x=>'intitle:'+x).join(' ')+' '+v.number+(pn?' inpublisher:'+pn:''),'it')}catch(e){break}
 const hit=r.find(b=>isbnOk(b.isbn)&&numOf(b.title)==v.number&&sameSeries(v.series,b.title)&&(edOf(b.title)||'')==(v.edition||'')&&!vols.some(y=>y.isbn==b.isbn));
 if(hit){v.isbn=hit.isbn;delete v.ac2v;got++;if(!v.cover){const u=await amazonCover(hit.isbn);if(u)v.cover=u}}await sleep(500)}
