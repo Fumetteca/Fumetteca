@@ -110,7 +110,7 @@ const NOTBOOK = /\beps?\.?\s*\d|\bepisodi\b|\b(?:dvd|blu-?ray|bluray|4k|uhd|stee
 const MARCA = [['panini', /panini|planet manga|marvel italia/i], ['star', /star comics|edizioni star/i], ['jpop', /j-?pop/i], ['bd', /edizioni bd|\bbd edizioni/i], ['magic', /magic ?press/i],
   ['dokusho', /dokusho/i], ['musubi', /musubi/i], ['hikari', /hikari/i], ['e001', /\b001\b/], ['goen', /\bgoen\b|\brw[- ]?(?:edizioni|lion|goen)\b/i], ['bao', /\bbao\b/i], ['coconino', /coconino/i],
   ['tunue', /tunu[eé]/i], ['bonelli', /bonelli/i], ['cosmo', /(?:editoriale|edizioni) cosmo|cosmo editoriale/i], ['npe', /\bnpe\b|nicola pesce/i], ['hollow', /hollow ?press/i], ['nipponshock', /nippon ?shock/i],
-  ['ishi', /\bishi\b/i], ['toshokan', /toshokan/i], ['dynit', /dynit/i]];
+  ['ishi', /\bishi\b/i], ['toshokan', /toshokan/i], ['shockdom', /shockdom/i], ['dynit', /dynit/i]];
 const marcaKey = m => (MARCA.find(([k, r]) => r.test(m)) || [])[0] || 'x-' + String(m).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const resold = [], marcaName = {};
 const PRE = /pre-?ordin|prenota|in arrivo|prossimamente|prossime uscite|coming soon|pre-?order|disponibile a breve/i;
@@ -429,16 +429,23 @@ await Promise.all(SRC.filter(s => ONLY.includes(s.k)).map(async s => {
 }));
 
 // ---------- calendario di riserva: i volumi di altri editori venduti da Dynit completano ISBN, data e copertina ----------
-const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['’`]/g, '').replace(/\(([^)]*)\)/g, ' $1 ').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(w => w.length > 1 && !/^(?:il|lo|la|gli|le|the|an|di|vol|volume)$/.test(w)).sort().join(' ');
+const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['’`]s\b/g, '').replace(/['’`]/g, ' ').replace(/\(([^)]*)\)/g, ' $1 ').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(w => w.length > 1 && !/^(?:il|lo|la|gli|le|the|an|di|vol|volume)$/.test(w)).sort().join(' ');
 const SPECIAL = /variant|box|limited|cofanetto|deluxe|special|speciale|collector|bundle|pack|\d+\s*-\s*\d+/i;
 let fused = 0, added = 0;
 if (resold.length) {
-  const idx = new Map();
-  for (const x of items.values()) { if (x.number == null || x.pub === 'dynit') continue; const sr = x.serie || (volOf(x.title) || {}).serie; if (!sr) continue;
-    idx.set(x.pub + '|' + norm(sr) + '#' + x.number, x); if (x.isbn) idx.set(x.pub + '|isbn' + x.isbn, x); }
+  const idx = new Map(), byNum = new Map();
+  for (const x of items.values()) { if (x.number == null || x.pub === 'dynit' || /dynit\.it/.test(x.url)) continue; const sr = x.serie || (volOf(x.title) || {}).serie; if (!sr) continue;
+    idx.set(x.pub + '|' + norm(sr) + '#' + x.number, x); if (x.isbn) idx.set(x.pub + '|isbn' + x.isbn, x);
+    const kn = x.pub + '#' + x.number; if (!byNum.has(kn)) byNum.set(kn, []); byNum.get(kn).push([new Set(norm(sr).split(' ')), x]); }
+  // se il nome non è identico: stessa serie se le parole di uno sono tutte nell'altro (sottotitolo in più), purché le parole in più non indichino un'altra edizione
+  const EDX = /^(?:new|edition|nuova|edizione|deluxe|variant|color|colour|box|ristampa|perfect|ultimate|campus|episode|gold|special|speciale|limited|collection|kanzenban|omnibus|wide|anniversary)$/;
+  const loose = r => { const a = new Set(norm(r.serie).split(' ')); const c = (byNum.get(r.k + '#' + r.number) || []).filter(([b]) => {
+      const [sm, bg] = a.size <= b.size ? [a, b] : [b, a]; if (sm.size < 2 && bg.size > sm.size) return false;
+      return [...sm].every(w => bg.has(w)) && [...bg].filter(w => !sm.has(w)).every(w => !EDX.test(w)); });
+    return c.length === 1 ? c[0][1] : null; };
   for (const r of resold) {
     if (SPECIAL.test(r.title)) continue;
-    const o = (r.isbn && idx.get(r.k + '|isbn' + r.isbn)) || idx.get(r.k + '|' + norm(r.serie) + '#' + r.number);
+    const o = (r.isbn && idx.get(r.k + '|isbn' + r.isbn)) || idx.get(r.k + '|' + norm(r.serie) + '#' + r.number) || loose(r);
     if (o) { if (!o.isbn && r.isbn) o.isbn = r.isbn; if (r.date && (!o.date || o.nd)) { o.date = r.date; o.ann = 0; } if (!o.cover && r.cover) o.cover = r.cover; o.via = 'dynit'; o.ls = today; fused++; }
     else { put(r.k, { url: r.url, title: r.title, serie: r.serie, number: r.number, isbn: r.isbn, cover: r.cover, date: r.date, ann: r.ann, pages: r.pages, nd: r.date ? 0 : 1, via: 'dynit' }); added++; }
   }
