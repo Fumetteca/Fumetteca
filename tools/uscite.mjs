@@ -289,7 +289,7 @@ async function shopify(src) {
       const isbn = vars.map(y => cleanIsbn(y.barcode) || cleanIsbn(y.sku)).find(Boolean) || (asin ? to13(asin) : '') || isbnIn(txt);
       const date = labDate(txt), ann = !date && (pre.has(x.handle) || tags.some(t => PRE.test(t)) || PRE.test(title));
       put(src.k, { url: `${R}/products/${x.handle}`, title, serie: serie ? serie.slice(6).trim() : v.serie, number: v.number, ann: ann ? 1 : 0,
-        date: date || (ann ? '' : String(x.published_at || x.created_at || '').slice(0, 10)), isbn, cover: big((x.images && x.images[0] && x.images[0].src) || ''), pages: pagesIn(txt), detailAt: today });
+        date: date || (ann ? '' : String(x.published_at || x.created_at || '').slice(0, 10)), dq: date || ann ? 0 : 1, isbn, cover: big((x.images && x.images[0] && x.images[0].src) || ''), pages: pagesIn(txt), detailAt: today });
       n++;
     }
     await sleep(PAUSE);
@@ -430,6 +430,7 @@ await Promise.all(SRC.filter(s => ONLY.includes(s.k)).map(async s => {
 
 // ---------- calendario di riserva: i volumi di altri editori venduti da Dynit completano ISBN, data e copertina ----------
 const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['’`]s\b/g, '').replace(/['’`]/g, ' ').replace(/\(([^)]*)\)/g, ' $1 ').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(w => w.length > 1 && !/^(?:il|lo|la|gli|le|the|an|di|vol|volume)$/.test(w)).sort().join(' ');
+const FAM = { bd: ['bd', 'jpop'], jpop: ['jpop', 'bd'], toshokan: ['toshokan', 'bd'] };
 const SPECIAL = /variant|box|limited|cofanetto|deluxe|special|speciale|collector|bundle|pack|\d+\s*-\s*\d+/i;
 let fused = 0, added = 0;
 if (resold.length) {
@@ -439,14 +440,15 @@ if (resold.length) {
     const kn = x.pub + '#' + x.number; if (!byNum.has(kn)) byNum.set(kn, []); byNum.get(kn).push([new Set(norm(sr).split(' ')), x]); }
   // se il nome non è identico: stessa serie se le parole di uno sono tutte nell'altro (sottotitolo in più), purché le parole in più non indichino un'altra edizione
   const EDX = /^(?:new|edition|nuova|edizione|deluxe|variant|color|colour|box|ristampa|perfect|ultimate|campus|episode|gold|special|speciale|limited|collection|kanzenban|omnibus|wide|anniversary)$/;
-  const loose = r => { const a = new Set(norm(r.serie).split(' ')); const c = (byNum.get(r.k + '#' + r.number) || []).filter(([b]) => {
+  const loose = r => { const a = new Set(norm(r.serie).split(' ')); const c = (FAM[r.k] || [r.k]).flatMap(k => byNum.get(k + '#' + r.number) || []).filter(([b]) => {
       const [sm, bg] = a.size <= b.size ? [a, b] : [b, a]; if (sm.size < 2 && bg.size > sm.size) return false;
       return [...sm].every(w => bg.has(w)) && [...bg].filter(w => !sm.has(w)).every(w => !EDX.test(w)); });
     return c.length === 1 ? c[0][1] : null; };
   for (const r of resold) {
     if (SPECIAL.test(r.title)) continue;
-    const o = (r.isbn && idx.get(r.k + '|isbn' + r.isbn)) || idx.get(r.k + '|' + norm(r.serie) + '#' + r.number) || loose(r);
-    if (o) { if (!o.isbn && r.isbn) o.isbn = r.isbn; if (r.date && (!o.date || o.nd)) { o.date = r.date; o.ann = 0; } if (!o.cover && r.cover) o.cover = r.cover; o.via = 'dynit'; o.ls = today; fused++; }
+    const ks = FAM[r.k] || [r.k];
+    const o = ks.map(k => r.isbn && idx.get(k + '|isbn' + r.isbn)).find(Boolean) || ks.map(k => idx.get(k + '|' + norm(r.serie) + '#' + r.number)).find(Boolean) || loose(r);
+    if (o) { if (!o.isbn && r.isbn) o.isbn = r.isbn; if (r.date && (!o.date || o.nd || o.dq)) { o.date = r.date; o.ann = 0; o.dq = 0; } if (!o.cover && r.cover) o.cover = r.cover; o.via = 'dynit'; o.ls = today; fused++; }
     else { put(r.k, { url: r.url, title: r.title, serie: r.serie, number: r.number, isbn: r.isbn, cover: r.cover, date: r.date, ann: r.ann, pages: r.pages, nd: r.date ? 0 : 1, via: 'dynit' }); added++; }
   }
   console.log(`Calendario di riserva (Dynit): ${fused} volumi completati, ${added} aggiunti`);
