@@ -296,7 +296,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v36 · 26/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v37 · 27/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -534,9 +534,14 @@ function sameSeries(name,title){const a=new Set(tok(name)),b=new Set(itemTok(tit
 const [big,small]=a.size>=b.size?[a,b]:[b,a];if(![...small].every(w=>big.has(w)))return false;return [...big].filter(w=>!small.has(w)).every(w=>!EDW.has(w))}
 const setEq=(a,b)=>{a=new Set(tok(a));b=new Set(tok(b));return a.size>0&&a.size==b.size&&[...a].every(w=>b.has(w))};
 const itemSer=(name,x)=>sameSeries(name,x.title)&&(!x.serie||setEq(name,x.serie));
-function feedFor(s,j){const pk=pubOf(s.pub),sl=pubSlug[s.key];
-return j.items.filter(x=>pubIn(x.pub,pk)&&x.number!=null&&((pk=='star'&&sl&&String(x.url).includes('/fumetto/'+sl+'-'))||itemSer(s.name,x)))
-.map(x=>({number:+x.number,date:x.ann?'':(x.date||''),ann:x.ann?1:0,nd:x.nd?1:0,url:x.url,isbn:isbnOk(x.isbn)?x.isbn:'',cover:x.cover||'',pages:x.pages||0,feed:1}))}
+// stesso numero da più fonti (sito dell'editore + calendario Dynit): un solo volume, con il meglio di ciascuna
+// date dei negozi Shopify (/products/…) = giorno in cui il prodotto è stato messo online: approssimate
+const approx=x=>x.dq||/\/products\//.test(x.url||'');
+const rank=x=>(x.date&&!approx(x)?4:0)+(isbnOk(x.isbn)?2:0)+(/dynit\.it/.test(x.url)?0:1);
+function feedFor(s,j){const pk=pubOf(s.pub),sl=pubSlug[s.key],by=new Map();
+for(const x of j.items.filter(x=>pubIn(x.pub,pk)&&x.number!=null&&((pk=='star'&&sl&&String(x.url).includes('/fumetto/'+sl+'-'))||itemSer(s.name,x)))){const k=+x.number;if(!by.has(k))by.set(k,[]);by.get(k).push(x)}
+return[...by.entries()].map(([k,L])=>{const d=[...L].sort((a,b)=>rank(b)-rank(a))[0],own=L.find(x=>!/dynit\.it/.test(x.url))||d,dd=L.find(x=>x.date&&!approx(x))||L.find(x=>x.date)||d,ib=L.find(x=>isbnOk(x.isbn));
+const ann=dd.date?0:L.some(x=>x.ann)?1:0;return{number:k,date:ann?'':(dd.date||''),ann,nd:L.every(x=>x.nd)?1:0,url:own.url,isbn:ib?ib.isbn:'',cover:own.cover||(L.find(x=>x.cover)||{}).cover||'',pages:Math.max(0,...L.map(x=>x.pages||0)),feed:1}})}
 const feedFind=(j,series,num,pub)=>{const pk=pubOf(pub);return j&&pk&&num!=null?j.items.find(x=>pubIn(x.pub,pk)&&+x.number==+num&&itemSer(series,x)):null};
 async function feedState(){const e=$('#feedSt');if(!e)return;e.textContent='…';const j=await scFeed(true);
 if(!j){e.innerHTML='<span class="font-ko">Elenco uscite non trovato</span> accanto alla pagina: aggiungi su GitHub i due file dell\'aggiornamento automatico. Intanto per Star Comics provo il servizio ponte.';return}
@@ -577,7 +582,7 @@ if(!c.length){try{c=(await gb(q1+' '+k+(pub?` inpublisher:"${pub}"`:''),lg)).fil
 if(!c.length)break;add+=put(best(c));last=k}
 found+=add;chkAt[s.key]=Date.now();
 $('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b> (${esc(pub||'editore?')}${s.ed?' · '+esc(s.ed):''}): in collezione fino al ${s.top}${last>s.top?', uscito fino al '+last:', nessun volume successivo trovato'}${add?' · '+add+' nuovi':''}${esc(err)}<br><small>Cataloghi: ${raw.length} risultati, ${pool.length} di questa serie${stem?' · titolo nel catalogo: «'+esc(stem)+'»':''}${rej.length?' · esempi scartati: '+rej.slice(0,3).map(x=>'«'+esc(x.title)+'» '+esc(x.publisher||'?')+(x.number!=null?' n.'+x.number:'')).join('; '):''}</small> · <a target="_blank" rel="noopener" href="${esc(pubLink(s,last+1))}">cerca vol. ${last+1}</a></div>`;await sleep(250)}
-saveMeta();persist();render();autoCovers();st(L.length?(found?(found==1?'Trovato 1 volume da aggiungere alla lista':`Trovati ${found} volumi da aggiungere alla lista`):'Nessun nuovo volume trovato'):'Aggiungi prima qualche volume con il numero')}
+saveMeta();dedupeNew();persist();render();autoCovers();st(L.length?(found?(found==1?'Trovato 1 volume da aggiungere alla lista':`Trovati ${found} volumi da aggiungere alla lista`):'Nessun nuovo volume trovato'):'Aggiungi prima qualche volume con il numero')}
 catch(e){st('⚠️ '+e.message)}
 finally{checking=false}}
 
@@ -942,6 +947,13 @@ const fj=await scFeed();for(const v of L){const it=(fj&&fj.items.find(x=>x.isbn=
 finally{acRun=false}return got}
 // copia subito dall'elenco degli editori copertine e ISBN dei volumi da comprare (senza aspettare il controllo giornaliero)
 const gapCov={};
+// toglie i doppioni tra i volumi da comprare (stessa serie, numero ed edizione): tengo quello con più dati; via anche quelli già in collezione
+function dedupeNew(){const own=new Set(vols.filter(v=>v.state=='owned').map(v=>n(v.series)+'#'+v.number+'|'+(v.edition||''))),best=new Map(),drop=new Set();
+const sc=v=>(realIsbn(v)?4:0)+(v.cover?2:0)+(v.date?1:0);
+for(const v of vols){if(v.state!='new'||v.number==null)continue;const k=n(v.series)+'#'+v.number+'|'+(v.edition||'');if(own.has(k)){drop.add(v);continue}
+const o=best.get(k);if(!o){best.set(k,v);continue}const [keep,gone]=sc(v)>sc(o)?[v,o]:[o,v];
+if(!keep.cover&&gone.cover)keep.cover=gone.cover;if(!keep.date&&gone.date)keep.date=gone.date;if(!keep.pubUrl&&gone.pubUrl)keep.pubUrl=gone.pubUrl;best.set(k,keep);drop.add(gone)}
+if(drop.size){vols=vols.filter(v=>!drop.has(v));persist()}return drop.size}
 async function feedSync(){const fj=await scFeed();if(!fj)return 0;let ch=0;const byUrl=new Map(fj.items.map(x=>[x.url,x]));
 for(const v of vols){if(v.state=='hidden'||v.coverManual||(v.state=='owned'&&v.cover&&realIsbn(v)))continue;const own=v.state=='owned';
 const it=(v.pubUrl&&byUrl.get(v.pubUrl))||(realIsbn(v)&&fj.items.find(x=>x.isbn==v.isbn))||feedFind(fj,v.series,v.number,v.publisher);if(!it)continue;
@@ -1035,7 +1047,7 @@ for(const rv of r.vols||[]){const lv=m.get(rv.isbn);if(!lv||(rv.mt||0)>(lv.mt||0
 for(const[k,t]of Object.entries(tomb)){const v=m.get(k);if(v&&(v.mt||0)<=t){m.delete(k);ch=true}}
 vols=[...m.values()];
 if(r.meta&&(r.metaAt||0)>metaAt){for(const[name,obj]of [['skip',skip],['chkAt',chkAt],['lastOut',lastOut],['scov',scov],['smap',smap],['pubSlug',pubSlug]]){for(const k of Object.keys(obj))delete obj[k];Object.assign(obj,r.meta[name]||{})}metaAt=r.metaAt;writeMetaLocal();ch=true}
-snap=new Map(vols.map(v=>[v.isbn,volSig(v)]));lsSet('fumetteca',vols);lsSet('fumetteca_del',tomb);if(ch)render()}
+snap=new Map(vols.map(v=>[v.isbn,volSig(v)]));lsSet('fumetteca',vols);lsSet('fumetteca_del',tomb);if(dedupeNew())ch=true;if(ch)render()}
 async function sync(){if(!cloudOn()||!auth)return;if(syncing){syncAgain=true;return}syncing=true;clearTimeout(pushT);pushT=null;cloudUI();
 try{await uploadCovers();
 const rows=await api(`/rest/v1/libraries?select=data,updated_at&user_id=eq.${auth.user.id}`);if(rows&&rows[0]&&rows[0].data)mergeRemote(rows[0].data);
@@ -1134,6 +1146,6 @@ const sheetDrag=d=>{dragClose(d,()=>{if(d.id=='dlg')resetDel();d.close()});d.add
 let zNoAnim=false;
 dragClose($('#zoom'),()=>{zNoAnim=true;if(history.state&&history.state.z)history.back();else closeZoom()},{grabSel:'.znav',after:()=>$('#zoom').classList.remove('dragging')});
 document.querySelectorAll('dialog.sheet').forEach(sheetDrag);
-render();$('#warn').hidden=probe();setTimeout(async()=>{await feedSync().catch(()=>{});await autoCovers();await check('auto');isbnFill().catch(()=>{})},1500);
+dedupeNew();render();$('#warn').hidden=probe();setTimeout(async()=>{await feedSync().catch(()=>{});await autoCovers();await check('auto');isbnFill().catch(()=>{})},1500);
 idb.all().then(o=>{for(const[k,v]of Object.entries(o)){try{if(typeof v=='string'&&v.startsWith('data:image/'))covers.set(k,v)}catch(e){}}render()}).catch(()=>{});
 </script></body></html>
