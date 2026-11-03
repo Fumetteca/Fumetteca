@@ -4,6 +4,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Fumetteca</title>
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><meta name="theme-color" content="#ec6a12"><meta name="apple-mobile-web-app-title" content="Fumetteca">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
 <script>try{const k=localStorage.getItem('fumetteca_kit');if(k&&/^[a-z0-9]{5,12}$/.test(k))document.write('<link rel="stylesheet" href="https://use.typekit.net/'+k+'.css">')}catch(e){}</script>
@@ -135,6 +136,8 @@ details.more summary{margin:18px 4px 2px;color:var(--ac-tx);font-weight:650;font
 .bt button{padding:13px 18px;border-radius:999px;font-weight:650;background:var(--fill)}
 #sv,#scSave{flex:1;background:var(--ac);color:#fff}#del{color:var(--red)}
 #msg{flex-basis:100%;order:-1;font-size:14px;color:var(--mu)}#msg.err{color:var(--red);font-weight:600}
+#offl{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 10px);left:50%;transform:translateX(-50%);z-index:98;padding:7px 14px;border-radius:999px;font-weight:650;font-size:13px;background:#3a2a1f;color:#fff;box-shadow:0 8px 20px -8px rgba(0,0,0,.4);white-space:nowrap}
+#upd{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 10px);left:50%;transform:translateX(-50%);z-index:99;padding:10px 18px;border-radius:999px;font:inherit;font-weight:700;font-size:15px;border:0;background:var(--ac);color:#fff;box-shadow:0 10px 24px -8px var(--ac-glow);white-space:nowrap}
 #toast{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;transform:translateX(-50%);z-index:99;padding:10px 18px;border-radius:999px;font-weight:650;font-size:15px;max-width:92vw;text-align:center}
 .books{gap:0}
 .fc{position:relative;flex:none;width:78px;height:117px;margin-right:9px;border-radius:3px 7px 7px 3px;overflow:hidden;background:var(--sc,hsl(var(--h,30) 42% 50%));box-shadow:0 1px 1px rgba(0,0,0,.25),4px 8px 14px -3px rgba(0,0,0,.42);cursor:pointer}
@@ -255,6 +258,9 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 
 <dialog id="menuDlg" class="sheet"><div class="grab"></div><h2>Altro</h2>
 <button class="bigb sec" id="exp">Esporta la collezione in CSV</button>
+<h2 style="font-size:19px;margin:20px 2px 4px">Uso senza rete</h2>
+<p class="cap" style="margin-top:0">L'app si apre e funziona anche offline (fiere, treno, metropolitana): collezione, mancanti e nuove uscite restano sul telefono. Prima di partire, con una buona connessione, salva anche le copertine.</p>
+<button class="bigb sec" id="offB">Prepara per l'uso offline</button><p class="cap" id="offSt"></p>
 <h2 style="font-size:19px;margin:20px 2px 4px">Siti degli editori</h2>
 <p class="cap" style="margin-top:0">Ogni giorno GitHub legge i cataloghi ufficiali di oltre 20 editori (Star Comics, Panini, J-POP, Edizioni BD, Magic Press, Dynit, Dokusho, Bonelli, Cosmo e altri) e li salva accanto a questa pagina in <b>uscite.json</b> e nella cartella <b>uscite</b>. L'app scarica solo gli editori dei tuoi volumi e ne prende numeri, date, ISBN e copertine; vale anche per le serie che aggiungi dopo. Il nome dell'editore nei volumi deve essere riconoscibile (es. «Star Comics», «Magic Press»). Riserva per Star Comics: un servizio ponte pubblico (allorigins.win, corsproxy.io, codetabs.com), spesso lento o fuori uso.</p>
 <p class="cap" id="feedSt"></p><p class="cap" id="cfgSt"></p><label class="chk"><input type="checkbox" id="pubProxy">Se l'elenco non c'è, prova il servizio ponte</label>
@@ -287,7 +293,7 @@ input,textarea{border-radius:max(12px,calc(var(--rk) - 8px))}
 <p id="auMsg" class="cap"></p><div class="sheet-end"></div></dialog>
 <div id="lock" hidden><div class="lockin"><h1 style="margin-bottom:6px">📚 Fumetteca</h1><p class="hint" id="lockWho" style="margin:0 0 22px"></p>
 <button class="bigb pri" id="lockGo">Sblocca</button><button type="button" class="link" id="lockPw" style="display:block;margin:16px auto 0">Usa email e password</button><p class="cap" id="lockMsg" style="text-align:center"></p></div></div>
-<div id="toast" class="glass" hidden></div>
+<div id="toast" class="glass" hidden></div><div id="offl" hidden>📴 Offline · uso i dati salvati sul telefono</div><button id="upd" hidden>🔄 Nuova versione dell'app · Aggiorna</button>
 <script>window.__cfg="assente"</script><script src="config.js" onload="window.__cfg=window.FUMETTECA_CONFIG?'ok':'errore'" onerror="window.__cfg='non trovato'"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -296,7 +302,7 @@ function toast(m,ms){const t=document.querySelector('#toast');t.textContent=m;t.
 function badImg(i){const d=document.createElement('div');d.className='ph bad';d.textContent='!';d.title='Immagine non caricata';i.replaceWith(d)}
 window.addEventListener('error',e=>{toast('⚠️ Errore: '+e.message,7000);const g=document.querySelector('#msg');if(g){g.textContent='⚠️ Errore: '+e.message;g.className='err';g.hidden=false}});
 window.addEventListener('unhandledrejection',e=>toast('⚠️ Errore: '+(e.reason&&e.reason.message||e.reason),7000));
-const VER='v37 · 27/10';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VER='v38 · 03/11';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const PUBA=[/panini|planet manga|marvel italia|dc italia/i,/star comics|edizioni star/i,/j-?pop|edizioni bd/i];
 const pubKey=p=>{const i=PUBA.findIndex(r=>r.test(p||''));return i>=0?'#'+i:n(p)};
@@ -316,7 +322,7 @@ function parse(t){t=t.replace(/^manga\s*:\s*/i,'').replace(/^libri?\s+/i,'').rep
 
 // ---- Fonti dati: Google Books + Open Library (fallback)
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function jget(u){for(let t=0;t<3;t++){const r=await fetch(u);if(r.status==429)throw Error('HTTP 429: troppe richieste');if(r.ok)return r.json();if(r.status!=429&&r.status<500)throw Error('HTTP '+r.status);await sleep(1500*(t+1))}throw Error('HTTP 429: troppe richieste, riprova tra poco')}
+async function jget(u){for(let t=0;t<3;t++){const r=await tfetch(String(u),10000);if(r.status==429)throw Error('HTTP 429: troppe richieste');if(r.ok)return r.json();if(r.status!=429&&r.status<500)throw Error('HTTP '+r.status);await sleep(1500*(t+1))}throw Error('HTTP 429: troppe richieste, riprova tra poco')}
 const to10=i=>{if(!/^978\d{10}$/.test(i))return'';const d=i.slice(3,12);let t=0;for(let k=0;k<9;k++)t+=(10-k)*+d[k];const c=(11-t%11)%11;return d+(c==10?'X':c)};
 const EDRE=/\b(new edition|perfect edition|deluxe|ultimate edition|variant|collector'?s?(?: edition)?|kanzenban|full color|cofanetto|limited edition|special edition|master edition|omnibus)\b/i;
 const edOf=t=>((String(t||'').match(EDRE)||[])[1]||'').toLowerCase();
@@ -338,7 +344,7 @@ async function ol(isbn){const k='ISBN:'+isbn,j=await jget(`https://openlibrary.o
 const t=[b.title,b.subtitle].filter(Boolean).join(' '),[s,nm]=parse(t);
 return{isbn,title:t,edition:edOf(t),series:s,number:nm,authors:(b.authors||[]).map(a=>a.name).join(', '),publisher:(b.publishers||[]).map(p=>p.name).join(', '),language:lgOf(isbn),date:b.publish_date||'',pages:b.number_of_pages||0,summary:typeof b.notes=='string'?b.notes:'',cover:b.cover?.large||b.cover?.medium||''}}
 const down={};
-async function lookup(isbn,quiet){const L=m=>{if(!quiet)log(m)};let r=null;
+async function lookup(isbn,quiet){const L=m=>{if(!quiet)log(m)};let r=null;if(!navigator.onLine)return null;
 if(!(down.gb>Date.now())){try{r=(await gb('isbn:'+isbn))[0]}catch(e){if(/429/.test(e.message)){down.gb=Date.now()+10*6e4;log('⚠️ Google Books: troppe richieste, lo salto per 10 minuti')}else L('⚠️ Google Books: '+e.message)}}
 if(!r&&!down.sbn){for(const q of [isbn,to10(isbn)].filter(Boolean)){try{const rec=(await sbn('isbn='+q))[0];if(rec){r=mapSBN(rec,isbn);if(r){r.isbn=isbn;L('ℹ️ Trovato su SBN (biblioteche italiane)');break}}}catch(e){if(e instanceof TypeError){down.sbn=1;log('⚠️ SBN non raggiungibile da questo browser: lo salto')}else L('⚠️ SBN: '+e.message);break}}}
 if(!r&&!(down.ol>Date.now())){try{r=await ol(isbn);if(r)L('ℹ️ Trovato su Open Library')}catch(e){down.ol=Date.now()+10*6e4;L('⚠️ Open Library: '+e.message)}}
@@ -351,6 +357,8 @@ if(ex){if(ex.state=='owned'){log('↩︎ Già in collezione: '+ex.title);return{
 ex.state='owned';ex.addedAt=Date.now();if(!realIsbn(ex))ex.isbn=i;rememberSer(ex);save();render();log('✅ Aggiunto: '+ex.title);if(!batch)autoCovers();return{ok:1,v:ex}}
 const fj=await feedIsbn([i]),fe=fj&&fj.items.find(x=>x.isbn==i);
 let r=fe?{title:fe.title,series:fe.serie||feedName(fe.title),number:fe.number!=null?+fe.number:null,publisher:PUBN[fe.pub]||'',date:fe.ann?'':(fe.date||''),cover:fe.cover||'',pages:fe.pages||0,language:'it',authors:'',edition:edOf(fe.title)}:null;
+if(!r&&!navigator.onLine){log('📴 Offline: '+i+' – completa serie e numero, il resto (titolo, autore, copertina) lo cerco quando torna la rete');const g=guessSeries();
+if(batch)return{miss:1};edit({isbn:i,state:'owned',needOnline:1,...(g?{...serFields(g),number:g.top+1}:{})},true);return{form:1}}
 if(!r){log('🔎 '+i+'…');r=await lookup(i,from=='scan')}
 if(r){const s=matchSeries(r);let o={...r,isbn:i,isbn10:i10||'',state:'owned',addedAt:Date.now()};
 if(s){o={...o,series:s.name,authors:s.authors||o.authors,publisher:s.pub||o.publisher,language:s.lang||o.language,edition:s.ed||o.edition||''};if(o.number==null)o.number=s.top+1;
@@ -371,7 +379,7 @@ try{sc&&sc.pause(true);scanPaused=true}catch(e){}
 const r=await addIsbn(i,false,'scan');
 if(r.ok){scanN++;scanMsg(`✅ ${r.v.title} · registrato (${scanN} in questa sessione). Inquadra il prossimo.`,'ok')}
 else if(r.dup)scanMsg(`↩︎ ${r.v.title} è già in collezione. Inquadra il prossimo.`,'dup');
-else if(r.form){scanMsg('✍️ Non trovato: completa la scheda e salva, poi lo scanner riparte.');return}
+else if(r.form){scanMsg(navigator.onLine?'✍️ Non trovato: completa la scheda e salva, poi lo scanner riparte.':'📴 Offline: scegli serie e numero e salva; titolo e copertina li completo quando torna la rete.');return}
 else scanMsg('⚠️ Codice non valido, riprova.','err');
 setTimeout(resumeScan,1200)}
 function resumeScan(){if(sc&&scanPaused&&!$('#dlg').open){try{sc.resume()}catch(e){}scanPaused=false;if(!/✅|↩︎/.test($('#scanSt').textContent))scanMsg('Inquadra il codice a barre del volume')}}
@@ -557,6 +565,7 @@ const pk=pubOf(s.pub);if(pk){try{const fj=await scFeed(),fi=fj?feedFor(s,fj):[];
 aiNote[s.key]=`<b>Sito ${PUBN[pk]}</b> (${esc(ps.via)}): ultimo uscito n. ${r.lastRel||'?'}${r.max>r.lastRel?', annunciato fino al n. '+r.max:''} · ${r.add?r.add+' nuovi':'nessun volume nuovo'}`;
 $('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b> (${esc(s.pub)}): <b>sito ufficiale ${PUBN[pk]}</b> (${esc(ps.via)}) · in collezione fino al ${s.top} · ultimo uscito n. ${r.lastRel||'?'}${r.max>r.lastRel?' · annunciato fino al n. '+r.max:''}${r.add?' · '+r.add+' nuovi':''}${r.upd?' · '+r.upd+' aggiornati':''} · <a target="_blank" rel="noopener" href="${esc(pk=='star'?SC+'/titoli-fumetti/'+ps.slug:[...ps.items].sort((a,b)=>b.number-a.number)[0].url)}">${pk=='star'?'apri la collana':'apri sul sito'}</a></div>`;await sleep(250);continue}
 else{aiNote[s.key]='⚠️ Sito '+PUBN[pk]+': '+esc(ps.msg)+'. Ho usato i cataloghi.';$('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b>: sito ${PUBN[pk]}: ${esc(ps.msg)} → uso i cataloghi</div>`}}catch(e){aiNote[s.key]='⚠️ Sito '+PUBN[pk]+' non letto ('+esc(e.message)+'). Ho usato i cataloghi, che spesso non hanno ancora i volumi recenti. Per una lettura affidabile attiva l\'aggiornamento automatico su GitHub (menu •••).';$('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b>: sito ${PUBN[pk]} non letto (${esc(e.message)}) → uso i cataloghi</div>`}}
+if(!navigator.onLine){$('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b>: offline, i cataloghi online li controllo quando torna la rete</div>`;continue}
 const sets=s.own.filter(v=>v.number!=null).map(v=>tok(v.series)),key=sets.reduce((x,y)=>x.filter(w=>y.includes(w))),allow=new Set(sets.flat()),
 pubs=s.own.map(v=>v.publisher).filter(Boolean),pub=s.pub.split(/ [-–\/(]/)[0].trim(),langs=new Set(s.own.map(v=>v.language).filter(Boolean)),lg=s.lang;
 if(!key.length){$('#chklog').innerHTML+=`<div><b>${esc(s.name)}</b>: i titoli dei volumi sono troppo diversi, uniforma il campo Serie</div>`;continue}
@@ -940,7 +949,7 @@ if(v)scov[scKey]=v;else delete scov[scKey];const ok=saveScov();$('#scDlg').close
 toast(ok&&!idbFail?(v?'✅ Copertina della serie salvata'+(v.startsWith('idb:')?' (foto sul telefono)':' (collegata)'):'Copertina della serie tolta'):'⚠️ Salvata solo fino alla chiusura della pagina',ok&&!idbFail?2200:5000)};
 // ---- copertine automatiche: per i volumi senza copertina (o con la miniatura di Google Books, se non scelta a mano)
 let acRun=false;
-async function autoCovers(force){if(acRun)return 0;acRun=true;let got=0;
+async function autoCovers(force){if(acRun||!navigator.onLine)return 0;acRun=true;let got=0;
 try{const now=Date.now(),REPL=/books\.google|googleusercontent|anilist\.co|myanimelist|openlibrary\.org/,
 L=vols.filter(v=>v.state!='hidden'&&!v.coverManual&&(!v.cover||(!String(v.cover).startsWith('idb:')&&REPL.test(v.cover)))&&(v.isbn10||realIsbn(v)||pubOf(v.publisher))&&(force||v.ac2v!==3||!v.ac2At||now-v.ac2At>7*864e5));
 const fj=await scFeed();for(const v of L){const it=(fj&&fj.items.find(x=>x.isbn==v.isbn&&x.cover))||feedFind(fj,v.series,v.number,v.publisher),u=await itemCover(it)||await amazonCover(v.isbn10||'',v.isbn);v.ac2At=Date.now();v.ac2v=3;if(u){v.cover=u;got++;render()}}if(L.length)persist()}
@@ -965,13 +974,32 @@ if(ch)persist();render();return ch}
 // ISBN mancante (volumi presi da «Nuove uscite» o inseriti a mano): lo cerco su Google Libri per serie + numero + editore
 const numOf=t=>{const m=String(t||'').match(/(?:\bvol(?:ume)?\.?|\bn[°º.]?|#|\()\s*0*(\d{1,4})\b/i)||String(t||'').match(/\s0*(\d{1,4})\s*\)?\s*$/);return m?+m[1]:null};
 let ibRun=false;
-async function isbnFill(max=8){if(ibRun)return 0;ibRun=true;let got=0;
+async function isbnFill(max=8){if(ibRun||!navigator.onLine)return 0;ibRun=true;let got=0;
 try{const now=Date.now(),L=vols.filter(v=>v.state!='hidden'&&!realIsbn(v)&&v.number!=null&&v.series&&(!v.ibAt||now-v.ibAt>7*864e5)).sort((a,b)=>(b.state=='owned')-(a.state=='owned')).slice(0,max);
 for(const v of L){v.ibAt=now;const w=tok(v.series).filter(x=>x.length>1).slice(0,4);if(!w.length)continue;const pk=pubOf(v.publisher),pn=pk?(PUBN[pk]||'').split(/[\s-]/)[0]:'';let r=[];
 try{r=await gb(w.map(x=>'intitle:'+x).join(' ')+' '+v.number+(pn?' inpublisher:'+pn:''),'it')}catch(e){break}
 const hit=r.find(b=>isbnOk(b.isbn)&&numOf(b.title)==v.number&&sameSeries(v.series,b.title)&&(edOf(b.title)||'')==(v.edition||'')&&!vols.some(y=>y.isbn==b.isbn));
 if(hit){v.isbn=hit.isbn;delete v.ac2v;got++;if(!v.cover){const u=await amazonCover(hit.isbn);if(u)v.cover=u}}await sleep(500)}
 if(L.length){persist();render()}}finally{ibRun=false}return got}
+// volumi aggiunti senza rete: completo solo i campi vuoti (serie e numero li hai scelti tu)
+async function enrichPending(){const L=vols.filter(v=>v.needOnline&&realIsbn(v));if(!L.length||!navigator.onLine)return 0;let got=0;
+for(const v of L){const o=await lookup(v.isbn,true);if(!vols.includes(v))continue;
+if(o){for(const k of ['authors','pages','date','summary','language','edition'])if(!v[k]&&o[k])v[k]=o[k];if(!v.cover&&o.cover&&!v.coverManual)v.cover=o.cover;got++}
+delete v.needOnline;await sleep(300)}
+persist();render();if(got)log(`📶 Completati online ${got} volumi aggiunti senza rete`);return got}
+// salva sul telefono le copertine della collezione e dei volumi mancanti, e gli elenchi degli editori
+$('#offB').onclick=async()=>{const e=$('#offSt');
+if(!('serviceWorker' in navigator)||!isSecureContext){e.textContent='Questo browser non permette l\'uso senza rete.';return}
+if(!navigator.onLine){e.textContent='Serve la connessione per preparare l\'uso offline.';return}
+e.textContent='⏳ Salvo gli elenchi delle uscite…';const reg=await navigator.serviceWorker.ready;await scFeed(true).catch(()=>{});
+const fj=await scFeed().catch(()=>null),urls=new Set();
+for(const v of vols)if(/^https?:/.test(v.cover||''))urls.add(v.cover);for(const c of Object.values(scov))if(/^https?:/.test(c||''))urls.add(c);
+for(const c of Object.values(gapCov))if(c)urls.add(c);
+if(fj)for(const s of seriesList()){if(!pubOf(s.pub))continue;for(const x of feedFor(s,fj))if(x.number>s.top-3&&x.cover)urls.add(x.cover)}
+const L=[...urls];if(!L.length){e.textContent='✅ Pronta: nessuna copertina da salvare.';return}
+e.textContent=`⏳ Salvo le copertine: 0 di ${L.length}…`;
+const onMsg=m=>{const d=m.data||{};if(d.type!='prefetch')return;e.textContent=d.done<d.total?`⏳ Salvo le copertine: ${d.done} di ${d.total}…`:`✅ Pronta per l'uso offline: ${d.ok} copertine salvate sul telefono${d.ok<d.total?` (${d.total-d.ok} non disponibili)`:''}.`;if(d.done>=d.total)navigator.serviceWorker.removeEventListener('message',onMsg)};
+navigator.serviceWorker.addEventListener('message',onMsg);(reg.active||navigator.serviceWorker.controller).postMessage({type:'prefetch',urls:L})};
 const aiNote={};
 const isbnOk=i=>{i=String(i||'').replace(/[^0-9X]/gi,'');if(!/^97[89]\d{10}$/.test(i))return false;let t=0;for(let k=0;k<12;k++)t+=+i[k]*(k%2?3:1);return (10-t%10)%10==+i[12]};
 // ---- elimina un'intera serie (volumi, novità, copertina, impostazioni)
@@ -1033,6 +1061,7 @@ if(!r.ok){const e=Error(itMsg((j&&(j.msg||j.error_description||j.message||j.erro
 function setAuth(j){auth=j?{access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(+j.expires_in||3600),user:{id:j.user.id,email:j.user.email}}:null;
 try{auth?localStorage.setItem('fumetteca_auth',JSON.stringify(auth)):localStorage.removeItem('fumetteca_auth')}catch(e){}cloudUI()}
 async function refreshAuth(){let r,d;try{r=await fetch(CL.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:CL.key,'content-type':'application/json'},body:JSON.stringify({refresh_token:auth.refresh_token})});d=await r.json().catch(()=>({}))}catch(e){throw Error('Server non raggiungibile: controlla la connessione.')}
+if(!r.ok&&r.status>=500)throw Error('Server non raggiungibile: riprovo più tardi.');
 if(!r.ok){setAuth(null);toast('Sessione scaduta: accedi di nuovo',4000);throw Error('Sessione scaduta: accedi di nuovo.')}setAuth({...d,user:d.user||auth.user})}
 const dataToBlob=d=>{const m=/^data:([^;,]+);base64,(.*)$/.exec(d);const b=atob(m[2]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new Blob([u],{type:m[1]})};
 // le foto salvate sul telefono vanno sul server, così si vedono su tutti i dispositivi
@@ -1146,6 +1175,13 @@ const sheetDrag=d=>{dragClose(d,()=>{if(d.id=='dlg')resetDel();d.close()});d.add
 let zNoAnim=false;
 dragClose($('#zoom'),()=>{zNoAnim=true;if(history.state&&history.state.z)history.back();else closeZoom()},{grabSel:'.znav',after:()=>$('#zoom').classList.remove('dragging')});
 document.querySelectorAll('dialog.sheet').forEach(sheetDrag);
-dedupeNew();render();$('#warn').hidden=probe();setTimeout(async()=>{await feedSync().catch(()=>{});await autoCovers();await check('auto');isbnFill().catch(()=>{})},1500);
+dedupeNew();render();$('#warn').hidden=probe();
+const onlineTasks=async()=>{await feedSync().catch(()=>{});if(!navigator.onLine)return;await enrichPending().catch(()=>{});await autoCovers();await check('auto');isbnFill().catch(()=>{})};
+setTimeout(onlineTasks,1500);
+// ---- senza rete: indicatore, e al ritorno della rete sincronizzo e completo quello che è rimasto in sospeso
+const offUI=()=>{$('#offl').hidden=navigator.onLine};offUI();
+addEventListener('offline',offUI);addEventListener('online',()=>{offUI();toast('📶 Di nuovo online: aggiorno');if(typeof sync=='function')sync();setTimeout(onlineTasks,800)});
+if('serviceWorker' in navigator&&isSecureContext){navigator.serviceWorker.register('sw.js').catch(()=>{});
+navigator.serviceWorker.addEventListener('message',m=>{if((m.data||{}).type=='update')$('#upd').hidden=false});$('#upd').onclick=()=>location.reload()}
 idb.all().then(o=>{for(const[k,v]of Object.entries(o)){try{if(typeof v=='string'&&v.startsWith('data:image/'))covers.set(k,v)}catch(e){}}render()}).catch(()=>{});
 </script></body></html>
