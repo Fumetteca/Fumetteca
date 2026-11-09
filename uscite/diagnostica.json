@@ -1,138 +1,171 @@
 {
- "updated": "2026-11-08T05:32:36.988Z",
- "panini": [],
+ "updated": "2026-11-09T05:52:44.873Z",
+ "panini": [
+  {
+   "url": "https://www.panini.it/shp_ita_it/spy-x-family-17-mplsh124-it08.html",
+   "bytes": 463895,
+   "title": "Spy x Family 17 | Panini",
+   "og": "Spy&#x20;x&#x20;Family&#x20;17",
+   "ogImage": "https://www.panini.it/media/catalog/product/M/P/MPLSH124_0.jpg?quality=80&amp;bg-color=255,255,255&amp;fit=bounds&amp;height=265&amp;width=265&amp;canvas=265:265",
+   "ldjson": "\n    {\"@context\":\"https://schema.org/\",\"@type\":\"Product\",\"name\":\"Spy x Family 17\",\"image\":\"https://www.panini.it/media/catalog/product/M/P/MPLSH124_0.jpg\",\"description\":\"<p>Yor ha un appuntamento con Loid. Il problema è che quando la donna si imbarazza, Twilight rischia la vita, tra calci e altre reazioni brutali.</p><p>Questa volta andrà più liscia? Difficile a dirsi, visto che a un certo punto Yor si ubriaca…&nbsp;</p><p>Nel frattempo, all’Eden College, Anya e amici affrontano una crisi di proporzioni epiche.</p>\",\"brand\":{\"@type\":\"Brand\",\"name\":\"Panini\"},\"itemCondition\":\"https://schema.org/NewCondition\",\"url\":\"https://www.panini.it/shp_ita_it/spy-x-family-17-mplsh124-it08.html\",\"offers\":{\"@type\":\"Offer\",\"@context\":\"https://schema.org/\",\"price\":5.6,\"availability\":\"https://schema.org/InStock\",\"priceCurrency\":\"EUR\",\"priceValidUntil\":\"2154-12-30 23:00:00\",\"url\":\"https://www.panini.it/shp_ita_it/spy-x-family-17-mplsh124-it08.html\",\"gtin13\":null}}",
+   "near": [
+    "ys Rat-Man Conan Harry Potter Universe Peanuts Tipologia Panini Comics Pocket Variant ed Esclusive Edizioni da Collezion",
+    "formazioni Autori: Tatsuya Endo Data di uscita: 12 nov 2026 Tipo prodotto: Fumetti Pagine: 232 Formato: 11.5X17.5 Contie",
+    "ita: 12 nov 2026 Tipo prodotto: Fumetti Pagine: 232 Formato: 11.5X17.5 Contiene: Spy×Family 17 Rilegatura: Brossurato fr",
+    "2026 Tipo prodotto: Fumetti Pagine: 232 Formato: 11.5X17.5 Contiene: Spy×Family 17 Rilegatura: Brossurato fresato Intern",
+    "ossurato fresato Interni: Bianco e Nero ISBN: 9791221961300 Il prodotto è consegnabile nei seguenti paesi: Italia, San M"
+   ]
+  },
+  {
+   "url": "https://www.panini.it/shp_ita_it/one-punch-man-special-edition-36-mmaon057isbn-it08.html",
+   "bytes": 461817,
+   "title": "One-Punch Man Special Edition 36 | Panini",
+   "og": "One-Punch&#x20;Man&#x20;Special&#x20;Edition&#x20;36",
+   "ogImage": "https://www.panini.it/media/catalog/product/placeholder/default/placeholder.jpg",
+   "ldjson": "\n    {\"@context\":\"https://schema.org/\",\"@type\":\"Product\",\"name\":\"One-Punch Man Special Edition 36\",\"image\":\"https://www.panini.it/media/catalog/product\",\"description\":\"<p>Nel sottosuolo del nuovo palazzo dell’Associazione Eroi, la battaglia per il controllo di Psychos raggiunge l’apice quando Tornado del Terrore si scatena contro i membri di Tsukuyomi. Dopodiché arriva Saitama… Disponibile anche in versione Special Edition con sovraccoperta.</p>\",\"brand\":{\"@type\":\"Brand\",\"name\":\"Panini\"},\"itemCondition\":\"https://schema.org/NewCondition\",\"url\":\"https://www.panini.it/shp_ita_it/one-punch-man-special-edition-36-mmaon057isbn-it08.html\",\"offers\":{\"@type\":\"Offer\",\"@context\":\"https://schema.org/\",\"price\":7.5,\"availability\":\"https://schema.org/OutOfStock\",\"priceCurrency\":\"EUR\",\"priceValidUntil\":\"2154-12-30 23:00:00\",\"url\":\"https://www.panini.it/shp_ita_it/one-punch-man-special-edition-36-mmaon057isbn-it08.html\",\"gtin13\":null}}",
+   "near": [
+    "ys Rat-Man Conan Harry Potter Universe Peanuts Tipologia Panini Comics Pocket Variant ed Esclusive Edizioni da Collezion",
+    "o 7,90 € -5% Prezzo speciale 7,50 € Non Disponibile Aggiungi alla lista desideri Spese di spedizione gratuite a partire ",
+    "di Tsukuyomi. Dopodiché arriva Saitama… Disponibile anche in versione Special Edition con sovraccoperta. Mostra di più M",
+    "ioni Autori: ONE, Yusuke Murata Data di uscita: 12 nov 2026 Tipo prodotto: Fumetti Pagine: 248 Formato: 11.5X17.5 Contie",
+    "ita: 12 nov 2026 Tipo prodotto: Fumetti Pagine: 248 Formato: 11.5X17.5 Contiene: One Punch-Man 36 Rilegatura: Brossurato",
+    "2026 Tipo prodotto: Fumetti Pagine: 248 Formato: 11.5X17.5 Contiene: One Punch-Man 36 Rilegatura: Brossurato + sovracove",
+    "ato + sovracover Interni: Bianco e Nero ISBN: 9791221962055 Il prodotto è consegnabile nei seguenti paesi: Italia, San M"
+   ]
+  }
+ ],
  "paniniVuote": [],
  "dynit": [
   {
-   "name": "Mayu Murata &#8211; Honey Lemon Soda #10",
-   "cats": "Manga manga Prossime Uscite prossime-uscite Uscite Prossimo trimestre uscite-prossimo-trimestre Uscite Prossimo trimestre Manga uscite-prossimo-trimestre-manga",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Dynit · Formato video:  · Formato audio:  · Anno: 0 · Genere:  · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 13/01/2027",
-   "brands": ""
-  },
-  {
-   "name": "Blue Lock: Plastoy &#8211; Bachira (Money Box / Salvadanaio)",
-   "cats": "Merchandising merchandising Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi Salvadanai salvadanai",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Plastoy · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 31/07/2026",
-   "brands": ""
-  },
-  {
-   "name": "Marvel Comics: Rock Off &#8211; Deadpool Arms (T-Shirt Unisex Tg. 2XL)",
-   "cats": "Merchandising merchandising T-Shirt t-shirt",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Abbigliamento · Marca: Rock Off · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 13/09/2023",
-   "brands": ""
-  },
-  {
-   "name": "Harry Potter E La Pietra Filosofale (SE)",
+   "name": "Spazio 1999 &#8211; Cosmic Princess",
    "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Warner Home Video · Formato video:  · Formato audio:  · Anno: 2001 · Genere: Film - Fantastico · Regista: Chris Columbus · Altri ruoli:  · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/09/2016",
+   "attrs": "Numero supporti: 1 · Durata: 88 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Pulp Video · Formato video: Full Screen · Formato audio: Dolby Digital 5.1 · Anno: 1976 · Genere: Film - Fantascienza · Regista: Charles Crichton,Peter Medak · Altri ruoli: Barbara Bain,Stuart Damon,Martin Landau,Catherine Schell · Lingue: Inglese,Italiano · Sottotitoli: Italiano · Contenuti extra: Photogallery,Trailers · Data di uscita: 13/04/2010",
    "brands": ""
   },
   {
-   "name": "Masters Of The Universe: Funko Pop! Television &#8211; Jumbo &#8211; Skeletor (Vinyl Figure 998)",
+   "name": "X-Men: Le Origini &#8211; Wolverine",
+   "cats": "Blu-Ray blu-ray Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 107 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Walt Disney Company (The) · Formato video: Wide Screen · Formato audio:  · Anno: 2009 · Genere: Film - Fantascienza · Regista: Gavin Hood · Altri ruoli: Harry Gregson - Williams,Danny Huston,Hugh Jackman,Ryan Reynolds,Liev Schreiber · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 14/10/2026",
+   "brands": ""
+  },
+  {
+   "name": "Marchio Di Dracula (Il)",
+   "cats": "Dvd dvd Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 91 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Pulp Video · Formato video: Wide Screen · Formato audio: Stereo · Anno: 1970 · Genere: Film - Horror · Regista: Roy Ward Baker · Altri ruoli: Christopher Lee,Michael Ripper,Dennis Waterman · Lingue: Inglese,Italiano · Sottotitoli: Italiano · Contenuti extra: Commento Audio,Featurette,Trailers · Data di uscita: 31/01/2024",
+   "brands": ""
+  },
+  {
+   "name": "Comunione Con Delitti",
+   "cats": "Dvd dvd Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 98 · Vm: Vietato ai minori di anni 14 · Origine: Italia · Formato: DVD · Marca: Cult Media · Formato video: Full Screen · Formato audio: Dolby Digital 5.1 · Anno: 1976 · Genere: Film - Horror · Regista: Alfred Sole · Altri ruoli: Lilian Roth,Brooke Shields,Rudolph Willrich · Lingue: Inglese,Italiano · Sottotitoli: Italiano · Contenuti extra: Photogallery,Trailers · Data di uscita: 02/11/2011",
+   "brands": ""
+  },
+  {
+   "name": "Aquaman (Ltd Digibook)",
+   "cats": "Blu-Ray blu-ray Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Warner Home Video · Formato video: Wide Screen · Formato audio:  · Anno: 2018 · Genere: Film - Fantascienza · Regista: James Wan · Altri ruoli: Willem Dafoe,Amber Heard,Jason Momoa,Tamuera Morrison · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 23/04/2019",
+   "brands": ""
+  },
+  {
+   "name": "Asterix: Plastoy &#8211; Mini Figure Asterix Che Si Tiene Le Bretelle Altezza 5,2 Cm",
    "cats": "Merchandising merchandising",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Funko · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 07/04/2026",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Plastoy · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 16/12/2014",
    "brands": ""
   },
   {
-   "name": "Aldila&#8217; (L&#8217;)",
-   "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 0 · Durata: 86 · Vm:  · Origine: Italia · Formato: DVD · Marca: Mustang Entertainment · Formato video: Wide Screen · Formato audio:  · Anno: 1981 · Genere: Film - Horror · Regista: Lucio Fulci · Altri ruoli: Fabio Frizzi,Sarah Keller,Veronica Lazar,Antoine Saint John,David Warbeck · Lingue: Italiano · Sottotitoli: Italiano non udenti · Contenuti extra:  · Data di uscita: 05/07/2016",
+   "name": "Hache Pour La Lune De Miel (Une) / Rosso Segno Della Follia (Il) [ITA]",
+   "cats": "Blu-Ray blu-ray Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Blu-Ray · Marca: Esc Editions · Formato video:  · Formato audio:  · Anno: 0 · Genere: Film - Horror · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 01/01/1901",
    "brands": ""
   },
   {
-   "name": "Akira Toriyama &#8211; Io Sono Dr. Slump",
-   "cats": "Libri libri Manga manga Prossime Uscite prossime-uscite",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Mondadori · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 03/11/2026",
+   "name": "Avengers: Infinity War",
+   "cats": "Blu-Ray blu-ray Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 149 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Walt Disney Company (The) · Formato video: Wide Screen · Formato audio:  · Anno: 2018 · Genere: Film - Fantascienza · Regista: Anthony Russo,Joe Russo · Altri ruoli: Don Cheadle,Robert Downey Jr,Chris Hemsworth,Scarlett Johansson,Mark Ruffalo · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 09/09/2026",
    "brands": ""
   },
   {
-   "name": "Grendizer: ABYstyle &#8211; Grendizer Team (Mug 320 Ml / Tazza)",
-   "cats": "Merchandising merchandising Tazze tazze",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: ABYstyle · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 01/01/1901",
+   "name": "Fukui Takumi / Umemura Shinya &#8211; Record Of Ragnarok. Lo Strano Caso Di Jack Lo Squartatore #09",
+   "cats": "Manga manga Prossime Uscite prossime-uscite",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Star Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 27/10/2026",
    "brands": ""
   },
   {
-   "name": "Gaston Lagaffe: Plastoy &#8211; Comics Speech Collection &#8211; Gaston-M&#8217;Enfin &#8211; New Edition",
-   "cats": "Merchandising merchandising Statue statue",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Plastoy · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 25/11/2023",
+   "name": "Harry Potter E I Doni Della Morte &#8211; Parte 01 (2 Blu-Ray+Dvd)",
+   "cats": "Blu-Ray blu-ray Live Action live-action",
+   "attrs": "Numero supporti: 2 · Durata: 146 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Warner Home Video · Formato video: Wide Screen · Formato audio: Dolby Digital 5.1 · Anno: 2010 · Genere: Film - Fantastico · Regista: David Yates · Altri ruoli:  · Lingue: Francese,Inglese,Italiano,Olandese,Tedesco · Sottotitoli: Croato,Ebraico,Francese,Olandese,Sloveno · Contenuti extra: Documentario,Traccia Rom · Data di uscita: 15/04/2011",
    "brands": ""
   },
   {
-   "name": "Toru Fujisawa &#8211; Soul Reviver South #02",
-   "cats": "Manga manga Prossime Uscite prossime-uscite Uscite Prossimo trimestre uscite-prossimo-trimestre Uscite Prossimo trimestre Manga uscite-prossimo-trimestre-manga",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Dynit · Formato video:  · Formato audio:  · Anno: 0 · Genere:  · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/12/2026",
+   "name": "X-Men &#8211; Conflitto Finale",
+   "cats": "Blu-Ray blu-ray Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 104 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Walt Disney Company (The) · Formato video: Wide Screen · Formato audio:  · Anno: 2006 · Genere: Film - Fantascienza · Regista: Brett Ratner · Altri ruoli: Halle Berry,Hugh Jackman,Famke Janssen,Ian Mckellen,Anna Paquin,John Powell,Patrick Stewart · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 27/08/2026",
    "brands": ""
   },
   {
-   "name": "I&#8217;M Your Man",
-   "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 105 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Plaion · Formato video: Wide Screen · Formato audio:  · Anno: 2021 · Genere: Film - Fantascienza · Regista: Maria Schrader · Altri ruoli: Maren Eggert,Sandra Huller,Dan Stevens · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/02/2022",
+   "name": "Clamp &#8211; Magic Knight Rayearth 2. Clamp Premium Collection #02",
+   "cats": "Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Star Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 13/10/2026",
    "brands": ""
   },
   {
-   "name": "Egomania",
-   "cats": "Dvd dvd Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 93 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Amoeba Films · Formato video: Full Screen · Formato audio: Stereo · Anno: 1986 · Genere: Film - Horror · Regista: Christoph Schlingensief · Altri ruoli: Udo Kier,Tilda Swinton · Lingue: Tedesco · Sottotitoli: Francese,Inglese,Italiano · Contenuti extra: Interviste,Trailers · Data di uscita: 15/09/2026",
-   "brands": ""
-  },
-  {
-   "name": "Steins Gate &#8211; Serie Completa (Eps 01-25) (4 Dvd)",
+   "name": "Monkey (The) &#8211; Le Grandi Avventure Di Goku (6 Dvd)",
    "cats": "Anime anime Dvd dvd",
-   "attrs": "Numero supporti: 4 · Durata: 600 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Dynit · Formato video: Wide Screen · Formato audio: Dolby Digital 5.1 · Anno: 0 · Genere: Animazione giapponese · Regista: Hiroshi Hamasaki · Altri ruoli:  · Lingue: Giapponese,Italiano · Sottotitoli: Italiano · Contenuti extra: Booklet,Sigla · Data di uscita: 25/11/2020",
+   "attrs": "Numero supporti: 6 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Anime Factory · Formato video:  · Formato audio:  · Anno: 1967 · Genere: Animazione giapponese · Regista: Sugii Gisaburo · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 18/01/2022",
    "brands": ""
   },
   {
-   "name": "Harry Potter E I Doni Della Morte &#8211; Parte 02 (SE)",
-   "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Warner Home Video · Formato video:  · Formato audio:  · Anno: 2011 · Genere: Film - Fantastico · Regista: David Yates · Altri ruoli:  · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/09/2016",
-   "brands": ""
-  },
-  {
-   "name": "One Punch Man: GB Eye &#8211; Saitama &#038; Genos (Set 2 Posters 52X38)",
-   "cats": "Merchandising merchandising Poster poster",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: GB Eye · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 30/11/2022",
-   "brands": ""
-  },
-  {
-   "name": "Spider-Man: Far From Home",
+   "name": "Sposa! (La)",
    "cats": "Blu-Ray blu-ray Live Action live-action Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 129 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Sony Pictures · Formato video: Wide Screen · Formato audio:  · Anno: 2019 · Genere: Film - Fantascienza · Regista: Jon Watts · Altri ruoli: Jon Favreau,Jake Gyllenhaal,Tom Holland,Samuel L. Jackson · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 02/07/2026",
+   "attrs": "Numero supporti: 1 · Durata: 126 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Warner Home Video · Formato video: Wide Screen · Formato audio:  · Anno: 2026 · Genere: Film - Horror · Regista: Maggie Gyllenhaal · Altri ruoli: Christian Bale,Annette Bening,Jessie Buckley · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 21/05/2026",
    "brands": ""
   },
   {
-   "name": "Buio Omega &#8211; Deluxe Edition Box (Blu-Ray+Dvd+Book+Cards)",
-   "cats": "Dvd dvd Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 2 · Durata: 98 · Vm: Vietato ai minori di anni 18 · Origine: Italia · Formato: DVD · Marca: Rustblade · Formato video: Wide Screen · Formato audio: DTS · Anno: 1979 · Genere: Film - Horror · Regista: Joe D'Amato · Altri ruoli: Goblin,Kieran Canter,Cinzia Monreale,Franca Stoppi · Lingue: Inglese,Italiano · Sottotitoli: Inglese,Italiano · Contenuti extra: Booklet,Documentario,Interviste,Trailers · Data di uscita: 16/09/2026",
+   "name": "Shimamoto Kazuhiko &#8211; Manga Bomber. New Edition #07",
+   "cats": "Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Star Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 06/10/2026",
    "brands": ""
   },
   {
-   "name": "Keiko Nagita &#8211; Miriam Blue",
-   "cats": "Libri libri Manga manga Prossime Uscite prossime-uscite",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Sprea Editori · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 25/11/2026",
-   "brands": ""
-  },
-  {
-   "name": "Akiko Higashimura &#8211; La Tigre Delle Nevi #02",
-   "cats": "Libri libri Manga manga Prossime Uscite prossime-uscite",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Bao Publishing · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 16/11/2026",
-   "brands": ""
-  },
-  {
-   "name": "Koko Haida &#8211; Swingin&#8217; Dragon &#038; Tiger Boogie #01",
-   "cats": "Libri libri Manga manga Prossime Uscite prossime-uscite",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Bao Publishing · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 16/11/2026",
-   "brands": ""
-  },
-  {
-   "name": "Hong Jacga &#8211; Dr. Brain. Stagione 2 #02",
+   "name": "Hamada Yoshikazu &#8211; Tsugumomo #03",
    "cats": "Manga manga",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 04/02/2026",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: XPublishing · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 29/09/2025",
    "brands": ""
   },
   {
-   "name": "Na Magonote Rifujin &#8211; Mushoku Tensei. Depressed Magician #01",
+   "name": "Kaoru Tada &#8211; Love Me Knight. Kiss Me Licia #05",
+   "cats": "Libri libri Manga manga",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: XPublishing · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 16/02/2026",
+   "brands": ""
+  },
+  {
+   "name": "Federico Pace &#8211; Hanami",
+   "cats": "Libri libri Manga manga",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Comicout · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 31/10/2025",
+   "brands": ""
+  },
+  {
+   "name": "Jeong Halim &#8211; Crush Of A Lifetime #06",
    "cats": "Comics comics Manga manga Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 16/07/2026",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 29/04/2026",
+   "brands": ""
+  },
+  {
+   "name": "Black Torch #04",
+   "cats": "Comics comics Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 23/07/2026",
+   "brands": ""
+  },
+  {
+   "name": "Masashi Kishimoto &#8211; Naruto Color. New Edition #07",
+   "cats": "Comics comics Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 13/08/2026",
+   "brands": ""
+  },
+  {
+   "name": "S-Cynan / Gamja Undead / Singnsong &#8211; The World After The Fall #03",
+   "cats": "Comics comics Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 06/08/2026",
    "brands": ""
   },
   {
@@ -142,15 +175,15 @@
    "brands": ""
   },
   {
-   "name": "Jun Abe &#8211; Alice In Wonderland. Il Manga. Complete Edition",
+   "name": "Masashi Kishimoto / Sho Hinata &#8211; Ninja Alle Terme. Naruto: La Nuova Generazione Della Foglia #02",
    "cats": "Comics comics Manga manga Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Disney · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 14/05/2026",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 11/06/2026",
    "brands": ""
   },
   {
-   "name": "Lash &#8211; Perfect Buddy #01",
-   "cats": "Comics comics Manga manga Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 30/04/2026",
+   "name": "Katarina Avi &#8211; Shangri-La Frontier #11",
+   "cats": "Comics comics Manga manga",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 09/04/2026",
    "brands": ""
   }
  ]
