@@ -1,6 +1,23 @@
 {
- "updated": "2026-11-14T05:25:59.730Z",
- "panini": [],
+ "updated": "2026-11-15T05:28:25.953Z",
+ "panini": [
+  {
+   "url": "https://www.panini.it/shp_ita_it/one-punch-man-36-mmaon057-it08.html",
+   "bytes": 468546,
+   "title": "One-Punch Man 36 | Panini",
+   "og": "One-Punch&#x20;Man&#x20;36",
+   "ogImage": "https://www.panini.it/media/catalog/product/m/m/mmaon057_0.jpg?quality=80&amp;bg-color=255,255,255&amp;fit=bounds&amp;height=265&amp;width=265&amp;canvas=265:265",
+   "ldjson": "\n    {\"@context\":\"https://schema.org/\",\"@type\":\"Product\",\"name\":\"One-Punch Man 36\",\"image\":\"https://www.panini.it/media/catalog/product/m/m/mmaon057_0.jpg\",\"description\":\"<p>Nel sottosuolo del nuovo palazzo dell’Associazione Eroi, la battaglia per il controllo di Psychos raggiunge l’apice quando Tornado del Terrore si scatena contro i membri di Tsukuyomi. Dopodiché arriva Saitama… Disponibile anche in versione Special Edition con sovraccoperta.</p>\",\"brand\":{\"@type\":\"Brand\",\"name\":\"Panini\"},\"itemCondition\":\"https://schema.org/NewCondition\",\"url\":\"https://www.panini.it/shp_ita_it/one-punch-man-36-mmaon057-it08.html\",\"offers\":{\"@type\":\"Offer\",\"@context\":\"https://schema.org/\",\"price\":5.6,\"availability\":\"https://schema.org/InStock\",\"priceCurrency\":\"EUR\",\"priceValidUntil\":\"2154-12-30 23:00:00\",\"url\":\"https://www.panini.it/shp_ita_it/one-punch-man-36-mmaon057-it08.html\",\"gtin13\":null}}",
+   "near": [
+    "ys Rat-Man Conan Harry Potter Universe Peanuts Tipologia Panini Comics Pocket Variant ed Esclusive Edizioni da Collezion",
+    "di Tsukuyomi. Dopodiché arriva Saitama… Disponibile anche in versione Special Edition con sovraccoperta. Mostra di più M",
+    "ioni Autori: ONE, Yusuke Murata Data di uscita: 12 nov 2026 Tipo prodotto: Fumetti Pagine: 248 Formato: 11.5X17.5 Contie",
+    "ita: 12 nov 2026 Tipo prodotto: Fumetti Pagine: 248 Formato: 11.5X17.5 Contiene: One Punch-Man 36 Rilegatura: Brossurato",
+    "2026 Tipo prodotto: Fumetti Pagine: 248 Formato: 11.5X17.5 Contiene: One Punch-Man 36 Rilegatura: Brossurato fresato Int",
+    "ossurato fresato Interni: Bianco e Nero ISBN: 9791221961317 Il prodotto è consegnabile nei seguenti paesi: Italia, San M"
+   ]
+  }
+ ],
  "paniniVuote": [],
  "dynit": [
   {
@@ -10,147 +27,147 @@
    "brands": ""
   },
   {
-   "name": "Sesto Giorno (Il)",
-   "cats": "Blu-Ray blu-ray Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Sony Pictures · Formato video: Wide Screen · Formato audio:  · Anno: 2000 · Genere: Film - Fantascienza · Regista: Roger Spottiswoode · Altri ruoli: Robert Duvall,Trevor Rabin,Michael Rapaport,Michael Rooker,Arnold Schwarzenegger · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 16/04/2019",
+   "name": "Jean Marais, L&#8217;Amour Et Ses Visages",
+   "cats": "Dvd dvd Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 319 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: DNA · Formato video: Wide Screen · Formato audio: Dolby Digital Mono · Anno: 1953 · Genere: Film - Drammatico,Film - Fantastico,Film - Musicale · Regista: Christian-Jaque,Jean Cocteau,Henri Decoin · Altri ruoli: Michel Auclair,Josette Day,Jean Marais,Jeanne Moreau,Viviane Romance · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 08/10/2026",
    "brands": ""
   },
   {
-   "name": "Daisuke Igarashi &#8211; Witches (Serie Completa 2 Volumi)",
-   "cats": "Manga manga",
-   "attrs": "Numero supporti: 2 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Dynit · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/11/2024",
-   "brands": ""
-  },
-  {
-   "name": "Dc Comics: Karactermania &#8211; Batman Batsignal (Portamonete Cookie)",
-   "cats": "Merchandising merchandising Portamonete portamonete",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Karactermania · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/11/2024",
-   "brands": ""
-  },
-  {
-   "name": "Logan &#8211; The Wolverine",
-   "cats": "Blu-Ray blu-ray Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 137 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Walt Disney Company (The) · Formato video: Wide Screen · Formato audio:  · Anno: 2017 · Genere: Film - Fantascienza · Regista: James Mangold · Altri ruoli: Hugh Jackman,Stephen Merchant,Patrick Stewart · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 14/10/2026",
-   "brands": ""
-  },
-  {
-   "name": "Star Wars: The Mandalorian And Grogu",
-   "cats": "Blu-Ray blu-ray Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 135 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Walt Disney Company (The) · Formato video: Wide Screen · Formato audio:  · Anno: 2026 · Genere: Film - Fantascienza · Regista: Jon Favreau · Altri ruoli: Dave Filoni,Pedro Pascal,Sigourney Weaver · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 30/09/2026",
-   "brands": ""
-  },
-  {
-   "name": "Cavaliere Del Male (Il)",
+   "name": "Funhouse (The) &#8211; Il Tunnel Dell&#8217;Orrore",
    "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 92 · Vm: Vietato ai minori di anni 14 · Origine: Italia · Formato: DVD · Marca: Pulp Video · Formato video:  · Formato audio:  · Anno: 1995 · Genere: Film - Horror · Regista: Gilbert Adler · Altri ruoli: William Sadler,Billy Zane · Lingue: Inglese · Sottotitoli: Italiano · Contenuti extra:  · Data di uscita: 26/08/2015",
+   "attrs": "Numero supporti: 1 · Durata: 86 · Vm: Vietato ai minori di anni 18 · Origine: Italia · Formato: DVD · Marca: Pulp Video · Formato video: Wide Screen · Formato audio:  · Anno: 1981 · Genere: Film - Horror · Regista: Tobe Hooper · Altri ruoli: Elizabeth Berridge,Shaun Carson · Lingue: Inglese,Italiano · Sottotitoli: Italiano · Contenuti extra: Filmografia / Biografia,Photogallery,Trailers · Data di uscita: 22/11/2011",
    "brands": ""
   },
   {
-   "name": "Corso Completo Di Manga In 12 Mesi",
-   "cats": "Manga manga",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Kappalab · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 22/09/2023",
+   "name": "Fullmetal Alchemist The Movie &#8211; Il Conquistatore Di Shamballa (First Press) (4K Ultra Hd+Blu-Ray)",
+   "cats": "Anime anime Blu-Ray 4K blu-ray-4k Prossime Uscite prossime-uscite Uscite Prossimo trimestre uscite-prossimo-trimestre Uscite Prossimo trimestre Anime uscite-prossimo-trimestre-anime",
+   "attrs": "Numero supporti: 3 · Durata: 104 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray 4K Uhd · Marca: Dynit · Formato video: Full Screen · Formato audio: DTS · Anno: 0 · Genere: Animazione giapponese · Regista: Seiji Mizushima · Altri ruoli:  · Lingue: Giapponese,Italiano · Sottotitoli: Italiano · Contenuti extra: Booklet,Commento Audio,Interviste,Making Of,Trailers · Data di uscita: 02/12/2026",
    "brands": ""
   },
   {
-   "name": "Toru Fujisawa &#8211; Soul Reviver South #02",
-   "cats": "Manga manga Prossime Uscite prossime-uscite Uscite Prossimo trimestre uscite-prossimo-trimestre Uscite Prossimo trimestre Manga uscite-prossimo-trimestre-manga",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Dynit · Formato video:  · Formato audio:  · Anno: 0 · Genere:  · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/12/2026",
-   "brands": ""
-  },
-  {
-   "name": "Attacco Dei Giganti (L&#8217;) &#8211; Il Film &#8211; Parte 2 &#8211; Le Ali Della Liberta&#8217;",
-   "cats": "Anime anime Dvd dvd",
-   "attrs": "Numero supporti: 1 · Durata: 115 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Dynit · Formato video:  · Formato audio:  · Anno: 2015 · Genere: Animazione giapponese · Regista: Tetsuro Araki · Altri ruoli:  · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 11/03/2016",
-   "brands": ""
-  },
-  {
-   "name": "Attacco Dei Giganti (L&#8217;) &#8211; Stagione 02 The Complete Series (Eps 26-37) (3 Blu-Ray)",
-   "cats": "Anime anime Blu-Ray blu-ray",
-   "attrs": "Numero supporti: 3 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Dynit · Formato video:  · Formato audio:  · Anno: 2013 · Genere: Animazione giapponese · Regista: Tetsuro Araki · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 27/02/2019",
-   "brands": ""
-  },
-  {
-   "name": "I&#8217;M Your Man",
-   "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 105 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Plaion · Formato video: Wide Screen · Formato audio:  · Anno: 2021 · Genere: Film - Fantascienza · Regista: Maria Schrader · Altri ruoli: Maren Eggert,Sandra Huller,Dan Stevens · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/02/2022",
-   "brands": ""
-  },
-  {
-   "name": "Pokemon: Funko Pop! Games &#8211; Psyduck (Vinyl Figure 781)",
-   "cats": "Merchandising merchandising",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Funko · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 30/11/2023",
-   "brands": ""
-  },
-  {
-   "name": "Sailor Moon: GB Eye &#8211; Sailor Moon &#038; Cats (Set 2 Posters Chibi 52X38)",
-   "cats": "Merchandising merchandising Poster poster",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: GB Eye · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 30/09/2024",
-   "brands": ""
-  },
-  {
-   "name": "Mimic 2",
-   "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 80 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Miramax Films · Formato video: Wide Screen · Formato audio:  · Anno: 2001 · Genere: Film - Horror · Regista: Jean De Segonzac · Altri ruoli: Bruno Campos,Alix Koromzay · Lingue: Inglese,Italiano · Sottotitoli: Italiano,Italiano per i non udenti · Contenuti extra:  · Data di uscita: 05/06/2013",
-   "brands": ""
-  },
-  {
-   "name": "Muneyuki Kaneshiro &#8211; Super Ball Girls #07",
-   "cats": "Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Star Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 20/10/2026",
-   "brands": ""
-  },
-  {
-   "name": "Vita Futura (La)",
-   "cats": "Dvd dvd Live Action live-action",
-   "attrs": "Numero supporti: 1 · Durata: 93 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Pulp Video · Formato video: Full Screen · Formato audio: Dolby Digital Stereo · Anno: 1936 · Genere: Film - Fantascienza · Regista: William Cameron Menzies · Altri ruoli: Cedric Hardwicke,Raymond Massey,Ralph Richardson · Lingue: Inglese,Italiano · Sottotitoli: Italiano · Contenuti extra: Trailers · Data di uscita: 08/09/2011",
-   "brands": ""
-  },
-  {
-   "name": "Marvel Comics: Rock Off &#8211; Distressed Logo (T-Shirt Unisex Tg. L)",
+   "name": "Betty Boop: In My Pocket (T-Shirt Unisex Tg. 2XL)",
    "cats": "Merchandising merchandising T-Shirt t-shirt",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Abbigliamento · Marca: Rock Off · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 20/07/2020",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Abbigliamento · Marca: PHM · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 29/01/2018",
    "brands": ""
   },
   {
-   "name": "Shimamoto Kazuhiko &#8211; Manga Bomber. New Edition #07",
+   "name": "Grendizer: ABYstyle &#8211; Grendizer Team (Mug 320 Ml / Tazza)",
+   "cats": "Merchandising merchandising Tazze tazze",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: ABYstyle · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 01/01/1901",
+   "brands": ""
+  },
+  {
+   "name": "13 Peccati",
+   "cats": "Blu-Ray blu-ray Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Blu-Ray · Marca: Blue Swan · Formato video:  · Formato audio:  · Anno: 2014 · Genere: Film - Horror · Regista: Daniel Stamm · Altri ruoli: Devon Graye,Mark Webber · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 04/10/2017",
+   "brands": ""
+  },
+  {
+   "name": "Gaston Lagaffe: Plastoy &#8211; Comics Speech Collection &#8211; Gaston-M&#8217;Enfin &#8211; New Edition",
+   "cats": "Merchandising merchandising Statue statue",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Plastoy · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 25/11/2023",
+   "brands": ""
+  },
+  {
+   "name": "Peanuts: Super7 &#8211; Fun! Fun! Wave 01 &#8211; Charlie Brown (Yellow)",
+   "cats": "Action Figures action-figures Merchandising merchandising",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Super7 · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 08/03/2025",
+   "brands": ""
+  },
+  {
+   "name": "Harry Potter E L&#8217;Ordine Della Fenice (SE)",
+   "cats": "Dvd dvd Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Warner Home Video · Formato video:  · Formato audio:  · Anno: 2007 · Genere: Film - Fantastico · Regista: David Yates · Altri ruoli:  · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 15/09/2016",
+   "brands": ""
+  },
+  {
+   "name": "Alquiè Jérome / Dollen Arnaud &#8211; I Cavalieri Dello Zodiaco. Time Odyssey. Collector Edition #04",
+   "cats": "Libri libri Manga manga Prossime Uscite prossime-uscite",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Star Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 17/11/2026",
+   "brands": ""
+  },
+  {
+   "name": "Futureworld &#8211; 2000 Anni Nel Futuro",
+   "cats": "Dvd dvd Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 100 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Pulp Video · Formato video: Wide Screen · Formato audio: Dolby Digital 5.1 · Anno: 1976 · Genere: Film - Fantascienza · Regista: Richard T. Heffron · Altri ruoli: Yul Brynner,Blythe Danner,Peter Fonda,Stuart Margolin · Lingue: Inglese,Italiano · Sottotitoli: Italiano · Contenuti extra:  · Data di uscita: 06/05/2014",
+   "brands": ""
+  },
+  {
+   "name": "Alice In Borderland #08",
+   "cats": "Manga manga",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Flashbook · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 25/03/2015",
+   "brands": ""
+  },
+  {
+   "name": "X-Men &#8211; Conflitto Finale",
+   "cats": "Blu-Ray blu-ray Live Action live-action Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 104 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Walt Disney Company (The) · Formato video: Wide Screen · Formato audio:  · Anno: 2006 · Genere: Film - Fantascienza · Regista: Brett Ratner · Altri ruoli: Halle Berry,Hugh Jackman,Famke Janssen,Ian Mckellen,Anna Paquin,John Powell,Patrick Stewart · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 27/08/2026",
+   "brands": ""
+  },
+  {
+   "name": "Monkey (The) &#8211; Le Grandi Avventure Di Goku (6 Dvd)",
+   "cats": "Anime anime Dvd dvd",
+   "attrs": "Numero supporti: 6 · Durata: 0 · Vm: Per tutti · Origine: Italia · Formato: DVD · Marca: Anime Factory · Formato video:  · Formato audio:  · Anno: 1967 · Genere: Animazione giapponese · Regista: Sugii Gisaburo · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 18/01/2022",
+   "brands": ""
+  },
+  {
+   "name": "Frammenti Dal Passato &#8211; Reminiscence",
+   "cats": "Blu-Ray blu-ray Live Action live-action",
+   "attrs": "Numero supporti: 1 · Durata: 116 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Warner Home Video · Formato video: Wide Screen · Formato audio:  · Anno: 2021 · Genere: Film - Fantascienza · Regista: Lisa Joy · Altri ruoli: Rebecca Ferguson,Hugh Jackman,Thandie Newton · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 17/11/2021",
+   "brands": ""
+  },
+  {
+   "name": "Karakuri Circus #18",
+   "cats": "Manga manga",
+   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Goen · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 01/12/2021",
+   "brands": ""
+  },
+  {
+   "name": "Eiichiro Oda &#8211; One Piece. Limited Edition. Con Booklet One Piece Mini Magazine Legend &#038; Next. Con Illustration Card #114",
    "cats": "Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
    "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Star Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 06/10/2026",
    "brands": ""
   },
   {
-   "name": "Sanrio: Funko Bitty Pop &#8211; Hello Kitty &#038; Cinnamoroll 2Pk",
-   "cats": "Merchandising merchandising Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Merchandising · Marca: Funko · Formato video:  · Formato audio:  · Anno: 0 · Genere: Merchandising - Anime/Manga/Comics · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 05/08/2026",
+   "name": "Spider-Man",
+   "cats": "Blu-Ray blu-ray Live Action live-action Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 121 · Vm: Per tutti · Origine: Italia · Formato: Blu-Ray · Marca: Sony Pictures · Formato video: Wide Screen · Formato audio:  · Anno: 2002 · Genere: Film - Fantascienza · Regista: Sam Raimi · Altri ruoli: Bruce Campbell,Willem Dafoe,Kirsten Dunst,Danny Elfman,James Franco,Tobey Maguire,Cliff Robertson · Lingue: Italiano · Sottotitoli:  · Contenuti extra:  · Data di uscita: 02/07/2026",
    "brands": ""
   },
   {
-   "name": "Jang E &#8211; The Uncanny Counter &#8211; Vol. 3",
-   "cats": "Manga manga Prossime Uscite prossime-uscite",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 25/11/2026",
-   "brands": ""
-  },
-  {
-   "name": "Yoonhee Na &#8211; Whale Star. La Sirenetta Di Gyeongseong #04",
+   "name": "Akiko Higashimura &#8211; Tokyo Tarareba Girls #04",
    "cats": "Libri libri Manga manga Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 10/06/2026",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Bao Publishing · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 22/05/2026",
    "brands": ""
   },
   {
-   "name": "Yoonhee Na &#8211; Whale Star. La Sirenetta Di Gyeongseong #02",
+   "name": "JH &#8211; Ho Qualcosa Da Dirti. Cofanetto",
+   "cats": "Libri libri Manga manga Prossime Uscite prossime-uscite",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 18/11/2026",
+   "brands": ""
+  },
+  {
+   "name": "Kwang Jin &#8211; The Great #02",
+   "cats": "Libri libri Manga manga Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 29/04/2026",
+   "brands": ""
+  },
+  {
+   "name": "Yoonhee Na &#8211; A Heartfelt Andante. La Melodia Nel Cuore #01",
    "cats": "Libri libri Manga manga",
    "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Gaijin · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 19/11/2025",
    "brands": ""
   },
   {
-   "name": "Itsuya Iroshi &#8211; Mizu E Janas",
-   "cats": "Libri libri Manga manga",
-   "attrs": "Numero supporti: 0 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Youcanprint · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 28/02/2025",
+   "name": "Masashi Kishimoto &#8211; Naruto Color. New Edition #14",
+   "cats": "Comics comics Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 01/10/2026",
    "brands": ""
   },
   {
-   "name": "Lash &#8211; Perfect Buddy #06",
+   "name": "Semi Di Ansia (Fuan No Tane) * #02",
    "cats": "Comics comics Manga manga Novità novita Promo ultimi 6 mesi promo-ultimi-6-mesi",
-   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 10/09/2026",
+   "attrs": "Numero supporti: 1 · Durata: 0 · Vm:  · Origine: Italia · Formato: Libri · Marca: Panini Comics · Formato video:  · Formato audio:  · Anno: 0 · Genere: Libri - Manga · Regista:  · Altri ruoli:  · Lingue:  · Sottotitoli:  · Contenuti extra:  · Data di uscita: 17/09/2026",
    "brands": ""
   }
  ]
